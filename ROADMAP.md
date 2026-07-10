@@ -28,8 +28,8 @@ Para el detalle técnico de cada pieza, ver `data-model.md`, `tech-stack.md` y `
 - [x] Instalar shadcn/ui (`pnpm dlx shadcn@latest init`)
 - [x] Crear el proyecto en Supabase y correr el SQL de `data-model.md` (incluye el constraint `rating_requires_read`; verificado vía REST: `books` responde 200 público, `user_books` bloqueada para `anon` como corresponde)
 - [x] `lib/supabase/client.ts` y `lib/supabase/server.ts`
-- [ ] Login/signup con Supabase Auth (email + password) — sin recuperación de contraseña ni verificación de email en el MVP (ver `CLAUDE.md`)
-- [ ] Verificar RLS con 2 usuarios de prueba: confirmar que ninguno ve datos del otro
+- [x] Login/signup con Supabase Auth (email + password) — sin recuperación de contraseña ni verificación de email en el MVP (ver `CLAUDE.md`)
+- [x] Verificar RLS con 2 usuarios de prueba: confirmar que ninguno ve datos del otro (verificado vía API con 2 cuentas de prueba: A ve su propia fila de `user_books`, B recibe `[]`, B no puede insertar suplantando a A —403—, y el `update`/`delete` de B sobre la fila de A afecta 0 filas)
 
 **Criterio de aceptación:** un usuario nuevo puede registrarse, loguearse, y ver un dashboard vacío
 ya con la paleta y tipografía definidas.
@@ -92,7 +92,10 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
 
 ## Backlog post-MVP (no bloquea el lanzamiento)
 
-- Recuperación de contraseña y verificación de email (Supabase Auth ya lo soporta, se activa cuando se priorice)
+- Recuperación de contraseña (Supabase Auth ya lo soporta, se activa cuando se priorice)
+- Verificación por código de email en cada login/signup (se probó para el MVP y se descartó porque
+  requiere conectar un servicio de email propio vía SMTP — el de Supabase por default es solo para
+  pruebas, con rate limits muy bajos)
 - Import de CSV (para cerrar el círculo de portabilidad de datos)
 - Estadísticas (libros leídos por año, por género, páginas totales)
 - Notas/reseña personal por libro
