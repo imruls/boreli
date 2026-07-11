@@ -37,6 +37,7 @@ export function BookListWithFilter({
               title={userBook.book.title}
               authors={userBook.book.authors}
               coverUrl={userBook.book.coverUrl}
+              trustedCover={Boolean(userBook.book.googleBooksId)}
               meta={
                 userBook.tags.length > 0 || (showRating && userBook.rating) ? (
                   <div className="flex flex-wrap items-center gap-2">

@@ -39,6 +39,7 @@ export default async function HomePage() {
                 title={userBook.book.title}
                 authors={userBook.book.authors}
                 coverUrl={userBook.book.coverUrl}
+                trustedCover={Boolean(userBook.book.googleBooksId)}
                 coverSize="lg"
                 footer={<Button size="sm">Continuar</Button>}
               />

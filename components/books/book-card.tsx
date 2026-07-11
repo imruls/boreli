@@ -6,6 +6,15 @@ interface BookCardProps {
   title: string;
   authors: string[];
   coverUrl?: string | null;
+  // Portadas de Google Books (dominio fijo, en la whitelist de
+  // `next.config.ts`) son confiables y se optimizan con `next/image`. Las de
+  // carga manual vienen de una URL arbitraria del usuario: para esas NO
+  // queremos que nuestro servidor haga el fetch (riesgo de SSRF si la URL
+  // apunta a infraestructura interna), así que se renderizan con un `<img>`
+  // nativo, que el navegador del usuario resuelve directo. Default `false`
+  // (seguro por default) — los call-sites que sepan que el libro viene de
+  // Google Books deben pasar `true` explícitamente.
+  trustedCover?: boolean;
   coverSize?: "sm" | "lg";
   meta?: React.ReactNode;
   footer?: React.ReactNode;
@@ -19,13 +28,19 @@ export function BookCard({
   title,
   authors,
   coverUrl,
+  trustedCover = false,
   coverSize = "sm",
   meta,
   footer,
   action,
   className,
 }: BookCardProps) {
-  const coverClass = coverSize === "lg" ? "h-20 w-14" : "h-14 w-10";
+  // `object-contain` (en vez de `object-cover`) para que la portada se vea
+  // completa siempre, sin recortar bordes por ajustarse al contenedor —
+  // aunque su relación de aspecto no sea exactamente 2:3, se ve entera con
+  // el fondo `bg-ink-border` como "marco" en vez de cropearla.
+  const coverClass = coverSize === "lg" ? "h-28 w-20" : "h-20 w-14";
+  const placeholderIconClass = coverSize === "lg" ? "size-6" : "size-5";
 
   return (
     <div
@@ -36,16 +51,30 @@ export function BookCard({
     >
       <div className={cn("shrink-0 overflow-hidden rounded-lg bg-ink-border", coverClass)}>
         {coverUrl ? (
-          <Image
-            src={coverUrl}
-            alt={title}
-            width={80}
-            height={112}
-            className="size-full object-cover"
-          />
+          trustedCover ? (
+            <Image
+              src={coverUrl}
+              alt={title}
+              width={96}
+              height={144}
+              className="size-full object-contain"
+            />
+          ) : (
+            // Portada de URL arbitraria (carga manual): la carga el
+            // navegador, no nuestro servidor, para no exponer el proxy de
+            // next/image a un SSRF contra una URL que no controlamos.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={coverUrl}
+              alt={title}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              className="size-full object-contain"
+            />
+          )
         ) : (
           <div className="flex size-full items-center justify-center text-ink-muted">
-            <BookOpen className="size-4" />
+            <BookOpen className={placeholderIconClass} />
           </div>
         )}
       </div>

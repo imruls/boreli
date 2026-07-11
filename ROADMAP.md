@@ -44,11 +44,11 @@ ya con la paleta y tipografía definidas.
 
 **Objetivo:** poder agregar libros a la biblioteca, por búsqueda o carga manual.
 
-- [ ] `app/api/books/search/route.ts`: route handler que llama a Google Books API con el query recibido
-- [ ] `components/book-search-modal.tsx`: input + resultados (portada, título, autor)
-- [ ] `components/tag-selector.tsx`: chips multi-select para `BookTag[]`
-- [ ] Lógica de alta desde búsqueda: al elegir un resultado → upsert en `books` (por `google_books_id`) → insert en `user_books` con `status: 'want_to_read'` y tags elegidos
-- [ ] `components/manual-book-form.tsx`: tab alternativo en el mismo modal para cuando la búsqueda no encuentra el libro. Campos: título, autor, portada (URL), páginas — ver tabla en `data-model.md`
+- [x] `app/api/books/search/route.ts`: route handler que llama a Google Books API con el query recibido (proxy con `GOOGLE_BOOKS_API_KEY`, normaliza la respuesta al shape de `Book`; probado end-to-end pero el proyecto de Google Cloud está devolviendo 429 con `quota_limit_value: 0` para `books.googleapis.com` — hay que revisar la cuota/facturación en la consola antes de darlo por verificado con datos reales)
+- [x] `components/book-search-modal.tsx`: input + resultados (portada, título, autor) — implementado como página completa (`app/(dashboard)/buscar/page.tsx`, patrón ya usado en Semana 1) en vez de modal; consume `app/api/books/search` con debounce de 400ms, estados de loading/error/sin resultados y portadas reales vía `next/image` (dominios de Google Books agregados a `next.config.ts`). Se sacó el mock de referencia (`lib/mock/search-books.ts`)
+- [x] `components/tag-selector.tsx`: chips multi-select para `BookTag[]` (`ToggleGroup type="multiple"`, a diferencia de `tag-filter-chips.tsx` que es de selección única)
+- [x] Lógica de alta desde búsqueda: al elegir un resultado → upsert en `books` (por `google_books_id`) → insert en `user_books` con el `status` y tags elegidos (`app/(dashboard)/buscar/actions.ts`). Nota: `books` no tiene policy de `update` en `data-model.md`, así que en vez de un upsert real se hace "select y si no existe insert" (con manejo de la carrera por `unique_violation` en `google_books_id`); el upsert real sí aplica en `user_books` por `(user_id, book_id)`, con `revalidatePath` de home/quiero-leer/leidos
+- [x] `components/manual-book-form.tsx`: para cuando la búsqueda no encuentra el libro. Campos: título, autor (split por coma), portada (URL), páginas — ver tabla en `data-model.md`. Implementado como Sheet (no como tab de un Dialog, siguiendo el patrón de página completa ya usado en vez de modal) accesible desde un link debajo del buscador y desde la acción del estado "sin resultados"; al enviarlo abre el mismo `AddToLibrarySheet` de status/tags y reusa `addBookToLibrary`
 
 **Criterio de aceptación:** buscar un libro real, elegirlo, asignarle un tag, y verlo aparecer en la
 lista de pendientes. También poder cargar un libro a mano con los 4 campos definidos y que aparezca igual.
