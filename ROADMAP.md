@@ -24,7 +24,11 @@ Para el detalle técnico de cada pieza, ver `data-model.md`, `tech-stack.md` y `
 **Objetivo:** tener el proyecto corriendo con auth completo y el sistema visual base definido.
 
 - [x] Configurar Tailwind con la paleta y tipografía de `design-system.md` (proyecto en Tailwind v4: los tokens `cream`/`ink`/`ink-muted`/`ink-border` y las fuentes Inter + Roboto Slab quedaron en `@theme` dentro de `app/globals.css`, no en `tailwind.config.ts`, que ya no existe en v4)
-- [ ] Wireframes de: home (`app/(dashboard)/page.tsx`), `quiero-leer/page.tsx`, `leidos/page.tsx`, modal de alta
+- [x] Wireframes de: home (`app/(dashboard)/page.tsx`), `quiero-leer/page.tsx`, `leidos/page.tsx`, modal de alta
+- [ ] Agregar los assets de marca (logotipo/isotipo + isologotipo, en SVG y PNG con fondo transparente) en
+      `public/brand/` (`boreli-icon-light.svg` / `boreli-icon-dark.svg` / `boreli-wordmark-light.svg` /
+      `boreli-wordmark-dark.svg`, ver `design-system.md`) y reemplazar el logo de texto placeholder
+      (`components/brand/logo-mark.tsx`) por el asset real en header, login/signup y favicon
 - [x] Instalar shadcn/ui (`pnpm dlx shadcn@latest init`)
 - [x] Crear el proyecto en Supabase y correr el SQL de `data-model.md` (incluye el constraint `rating_requires_read`; verificado vía REST: `books` responde 200 público, `user_books` bloqueada para `anon` como corresponde)
 - [x] `lib/supabase/client.ts` y `lib/supabase/server.ts`
