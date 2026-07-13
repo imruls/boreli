@@ -5,6 +5,7 @@ import { TagFilterChips, type TagFilterValue } from "@/components/books/tag-filt
 import { BookCard } from "@/components/books/book-card";
 import { BookTagBadge } from "@/components/books/book-tag-badge";
 import { RatingStars } from "@/components/books/rating-stars";
+import { BookStatusMenuButton } from "@/components/books/book-status-menu-button";
 import type { UserBook } from "@/types/book";
 
 export function BookListWithFilter({
@@ -47,6 +48,13 @@ export function BookListWithFilter({
                     ))}
                   </div>
                 ) : undefined
+              }
+              action={
+                <BookStatusMenuButton
+                  userBookId={userBook.id}
+                  bookTitle={userBook.book.title}
+                  currentStatus={userBook.status}
+                />
               }
             />
           ))}

@@ -87,6 +87,23 @@ export async function getUserBooksByStatus(
   return ((data ?? []) as unknown as UserBookRow[]).map(mapUserBook);
 }
 
+// Sin filtro de status: la usa el export a CSV (Semana 4), que necesita la
+// biblioteca completa en una sola pasada en vez de 3 queries por status.
+export async function getAllUserBooks(
+  supabase: SupabaseServerClient,
+  userId: string,
+): Promise<UserBook[]> {
+  const { data, error } = await supabase
+    .from("user_books")
+    .select(USER_BOOK_SELECT)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return ((data ?? []) as unknown as UserBookRow[]).map(mapUserBook);
+}
+
 export async function getLibraryCounts(
   supabase: SupabaseServerClient,
   userId: string,

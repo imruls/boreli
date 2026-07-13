@@ -1,10 +1,16 @@
 import type { LucideIcon } from "lucide-react";
+import type { Metadata } from "next";
 import { Pencil, ShieldCheck, LogOut, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/(dashboard)/actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/nav/page-header";
+import { ExportLibraryButton } from "@/components/export-library-button";
+
+export const metadata: Metadata = {
+  title: "Perfil — Boreli",
+};
 
 export default async function PerfilPage() {
   const supabase = await createClient();
@@ -29,6 +35,7 @@ export default async function PerfilPage() {
       <div className="flex flex-col px-4 sm:px-6">
         <ProfileRow icon={Pencil} label="Editar perfil" />
         <ProfileRow icon={ShieldCheck} label="Seguridad" />
+        <ExportLibraryButton />
         <Separator />
         <form action={logout}>
           <button

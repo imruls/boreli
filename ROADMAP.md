@@ -59,12 +59,17 @@ lista de pendientes. También poder cargar un libro a mano con los 4 campos defi
 
 **Objetivo:** el core funcional de la app.
 
-- [ ] Home: query de `user_books` filtrando `status = 'reading'` (soporta múltiples resultados)
-- [ ] `quiero-leer/page.tsx` y `leidos/page.tsx`: mismo patrón, filtrando por su status
-- [ ] Acción de cambio de estado: al mover a "leído", abrir `components/rating-input.tsx` (obligatorio 1-5) antes de confirmar
-- [ ] Al mover a "leyendo" → set `started_at`; al mover a "leído" → set `finished_at`
-- [ ] Al mover un libro **fuera** de "leído" hacia otro estado → limpiar `rating` (`null`) en la misma operación, por el constraint de `data-model.md`
-- [ ] `components/status-filter.tsx` + filtro combinable por tag
+- [x] Home: query de `user_books` filtrando `status = 'reading'` (soporta múltiples resultados) (`getUserBooksByStatus` en `lib/queries/user-books.ts`, consumido desde `app/(dashboard)/page.tsx` con `.map()` sobre el array de resultados)
+- [x] `quiero-leer/page.tsx` y `leidos/page.tsx`: mismo patrón, filtrando por su status (mismo `getUserBooksByStatus`, con `EmptyState` cuando no hay resultados y filtro por tag vía `components/books/book-list-with-filter.tsx`)
+- [x] Acción de cambio de estado: al mover a "leído", abrir `components/rating-input.tsx` (obligatorio 1-5) antes de confirmar (server action `changeBookStatus` en `app/(dashboard)/actions.ts`; UI en `components/books/change-status-sheet.tsx`, disparada por el botón `⋯` de cada card vía `components/books/book-status-menu-button.tsx` en home/quiero-leer/leidos — la selección de status queda en un estado intermedio del sheet y recién se confirma con el botón "Confirmar", deshabilitado si el destino es "leído" sin rating elegido)
+- [x] Al mover a "leyendo" → set `started_at`; al mover a "leído" → set `finished_at` (mismo `changeBookStatus`, un solo `update` con status + fechas + rating juntos)
+- [x] Al mover un libro **fuera** de "leído" hacia otro estado → limpiar `rating` (`null`) en la misma operación, por el constraint de `data-model.md` (mismo `update`: `rating` va a `null` salvo que el status destino sea `read`)
+- [x] `components/status-filter.tsx` + filtro combinable por tag — no se creó un componente nuevo: la
+      arquitectura real (Semana 1) ya resolvió el filtro por status a nivel de página, con 3 rutas fijas
+      (home = `reading`, `quiero-leer` = `want_to_read`, `leidos` = `read`) en vez de una sola vista con
+      selector de status. El filtro por tag combinable sobre eso ya existe (`components/books/tag-filter-chips.tsx`
+      dentro de `book-list-with-filter.tsx`). Un `status-filter.tsx` literal sería redundante — implicaría
+      elegir un status dentro de una página que ya está fija a ese status por ruta.
 
 **Criterio de aceptación:** mover un libro de pendiente → leyendo → leído sin que aparezca nunca en
 dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint si se revierte el estado.
@@ -75,11 +80,36 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
 
 **Objetivo:** cerrar el MVP dejándolo prolijo y accesible 100% vía navegador (sin instalación).
 
-- [ ] `lib/csv-export.ts`: arma el CSV desde `UserBook[]` (título, autor, estado, tags, rating, fechas)
-- [ ] Botón de exportar visible (header o configuración)
-- [ ] Revisión responsive en breakpoints de Tailwind (`sm`, `md`, `lg`)
-- [ ] Favicon, `<title>` y metadata básica en `app/layout.tsx`
-- [ ] Estados vacíos y loading states prolijos (ver convenciones en `design-system.md`)
+- [x] `lib/csv-export.ts`: arma el CSV desde `UserBook[]` (título, autor, estado, tags, rating, fechas)
+      (`buildLibraryCsv` — RFC 4180, BOM UTF-8 para Excel, `\r\n` como separador — y `buildLibraryCsvFilename`
+      con fecha del día; se agregó `getAllUserBooks` en `lib/queries/user-books.ts` para traer la biblioteca
+      completa sin filtrar por status, que es lo que pide el criterio de aceptación de esta semana)
+- [x] Botón de exportar visible (header o configuración) (`components/export-library-button.tsx` en
+      `/perfil`, dentro del listado de configuración de cuenta; llama a la server action `exportLibraryCsv`
+      —trae `getAllUserBooks` + `buildLibraryCsv`— y dispara la descarga con un Blob desde el navegador)
+- [x] Revisión responsive en breakpoints de Tailwind (`sm`, `md`, `lg`) — auditoría de código de todas
+      las páginas/componentes (no pude tomar screenshots reales, no tengo un navegador headless
+      disponible en este entorno; recomiendo que lo verifiques vos en el navegador en `sm`/`md`/`lg`).
+      Único issue real encontrado y corregido: el contenido de una sola columna (listas, forms) se
+      estiraba de punta a punta en pantallas grandes sin ningún límite de ancho. Se agregó
+      `lg:max-w-2xl` centrado tanto al `<main>` de `app/(dashboard)/layout.tsx` como a la fila interna
+      de `components/nav/app-header.tsx` (el fondo del header sigue full-bleed, solo se alinea el
+      contenido). El resto ya estaba bien resuelto: `BottomNav` (`md:hidden`) / nav de `AppHeader`
+      (`md:flex`) no se solapan, los `Sheet` (bottom) se ven bien en mobile, y `AuthLayout` ya limitaba
+      el ancho de login/signup con `max-w-sm`.
+- [x] Favicon, `<title>` y metadata básica en `app/layout.tsx` (favicon vía `app/icon.svg` — convención de
+      Next.js, sin tocar `layout.tsx` para esto —, un placeholder consistente con el mark de texto de
+      `logo-mark.tsx` (fondo `ink`, "B" en `cream`) hasta que estén los SVG de marca reales, momento en el
+      que este archivo se reemplaza directo. `app/layout.tsx` ya tenía `title`/`description` básicos desde
+      antes; se agregó `title` por página en `quiero-leer`, `leidos` y `perfil` (siguiendo el patrón
+      "— Boreli" ya usado en login/signup) y un `layout.tsx` server-only en `buscar/` solo para poder
+      exportar su `metadata`, porque esa página es Client Component y no puede exportarla directo)
+- [x] Estados vacíos y loading states prolijos (ver convenciones en `design-system.md`) — auditoría de
+      todos los `EmptyState`/`loading.tsx` existentes: ya seguían la convención (ícono + texto corto en
+      `ink-muted` + CTA en botón `ink` sólido; skeletons en tono `ink-border`). Único gap real: `/perfil`
+      y `/buscar` no tenían `loading.tsx` propio, así que durante la navegación caían en el skeleton de
+      `/` (home) sin relación con su contenido real — se agregaron `app/(dashboard)/perfil/loading.tsx`
+      y `app/(dashboard)/buscar/loading.tsx`, cada uno con la forma real de su página.
 - [ ] Deploy en Vercel + variables de entorno configuradas ahí
 
 **Criterio de aceptación:** desde el celular, abrir la URL de producción, loguearse, y descargar el CSV de la biblioteca completa.

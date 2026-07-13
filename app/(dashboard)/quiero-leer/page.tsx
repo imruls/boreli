@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { BookOpen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserBooksByStatus } from "@/lib/queries/user-books";
 import { PageHeader } from "@/components/nav/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BookListWithFilter } from "@/components/books/book-list-with-filter";
+
+export const metadata: Metadata = {
+  title: "Quiero leer — Boreli",
+};
 
 export default async function QuieroLeerPage() {
   const supabase = await createClient();
