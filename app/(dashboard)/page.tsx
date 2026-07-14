@@ -4,8 +4,7 @@ import { Search, ChevronRight, Clock, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getLibraryCounts, getUserBooksByStatus } from "@/lib/queries/user-books";
 import { BookCard } from "@/components/books/book-card";
-import { BookStatusMenuButton } from "@/components/books/book-status-menu-button";
-import { Button } from "@/components/ui/button";
+import { BookEditMenuButton } from "@/components/books/book-edit-menu-button";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -42,12 +41,13 @@ export default async function HomePage() {
                 coverUrl={userBook.book.coverUrl}
                 trustedCover={Boolean(userBook.book.googleBooksId)}
                 coverSize="lg"
-                footer={<Button size="sm">Continuar</Button>}
                 action={
-                  <BookStatusMenuButton
+                  <BookEditMenuButton
                     userBookId={userBook.id}
                     bookTitle={userBook.book.title}
                     currentStatus={userBook.status}
+                    currentTags={userBook.tags}
+                    currentRating={userBook.rating}
                   />
                 }
               />

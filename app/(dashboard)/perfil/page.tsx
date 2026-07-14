@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
-import { Pencil, ShieldCheck, LogOut, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, Pencil, ShieldCheck, LogOut, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/(dashboard)/actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -34,7 +35,14 @@ export default async function PerfilPage() {
 
       <div className="flex flex-col px-4 sm:px-6">
         <ProfileRow icon={Pencil} label="Editar perfil" />
-        <ProfileRow icon={ShieldCheck} label="Seguridad" />
+        <Link
+          href="/perfil/seguridad"
+          className="flex items-center gap-3 border-b border-ink-border py-3 text-sm font-medium text-ink"
+        >
+          <ShieldCheck className="size-4 text-ink-muted" />
+          <span className="flex-1">Seguridad</span>
+          <ChevronRight className="size-4 text-ink-muted" />
+        </Link>
         <ExportLibraryButton />
         <Separator />
         <form action={logout}>
@@ -59,8 +67,9 @@ export default async function PerfilPage() {
   );
 }
 
-// "Editar perfil" y "Seguridad" quedan solo visuales por ahora (sin destino):
-// todavía no hay funcionalidad construida para esas pantallas.
+// "Editar perfil" queda solo visual por ahora (sin destino): todavía no hay
+// funcionalidad construida para esa pantalla. "Seguridad" ya tiene destino
+// propio (ver Link arriba, hacia /perfil/seguridad).
 function ProfileRow({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
     <div className="flex items-center gap-3 border-b border-ink-border py-3 text-sm font-medium text-ink-muted">

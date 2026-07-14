@@ -25,9 +25,9 @@ Para el detalle técnico de cada pieza, ver `data-model.md`, `tech-stack.md` y `
 
 - [x] Configurar Tailwind con la paleta y tipografía de `design-system.md` (proyecto en Tailwind v4: los tokens `cream`/`ink`/`ink-muted`/`ink-border` y las fuentes Inter + Roboto Slab quedaron en `@theme` dentro de `app/globals.css`, no en `tailwind.config.ts`, que ya no existe en v4)
 - [x] Wireframes de: home (`app/(dashboard)/page.tsx`), `quiero-leer/page.tsx`, `leidos/page.tsx`, modal de alta
-- [ ] Agregar los assets de marca (logotipo/isotipo + isologotipo, en SVG y PNG con fondo transparente) en
-      `public/brand/` (`boreli-icon-light.svg` / `boreli-icon-dark.svg` / `boreli-wordmark-light.svg` /
-      `boreli-wordmark-dark.svg`, ver `design-system.md`) y reemplazar el logo de texto placeholder
+- [ ] Agregar los assets de marca (logotipo/isotipo + isologotipo, en PNG con fondo transparente) en
+      `public/brand/` (`boreli-icon-light.png` / `boreli-icon-dark.png` / `boreli-wordmark-light.png` /
+      `boreli-wordmark-dark.png`, ver `design-system.md`) y reemplazar el logo de texto placeholder
       (`components/brand/logo-mark.tsx`) por el asset real en header, login/signup y favicon
 - [x] Instalar shadcn/ui (`pnpm dlx shadcn@latest init`)
 - [x] Crear el proyecto en Supabase y correr el SQL de `data-model.md` (incluye el constraint `rating_requires_read`; verificado vía REST: `books` responde 200 público, `user_books` bloqueada para `anon` como corresponde)
@@ -110,7 +110,7 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
       y `/buscar` no tenían `loading.tsx` propio, así que durante la navegación caían en el skeleton de
       `/` (home) sin relación con su contenido real — se agregaron `app/(dashboard)/perfil/loading.tsx`
       y `app/(dashboard)/buscar/loading.tsx`, cada uno con la forma real de su página.
-- [ ] Deploy en Vercel + variables de entorno configuradas ahí
+- [x] Deploy en Vercel + variables de entorno configuradas ahí
 
 **Criterio de aceptación:** desde el celular, abrir la URL de producción, loguearse, y descargar el CSV de la biblioteca completa.
 
@@ -121,12 +121,19 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
 - [ ] Ajustes de UX detectados al usarla vos mismo unos días
 - [ ] Revisión final de dominio/deploy
 - [ ] Actualizar `CLAUDE.md` con cualquier convención nueva que haya surgido
+- [x] Recuperación de contraseña **sin servicio de email**: pregunta de seguridad fija para todos
+      los usuarios (`lib/security-question.ts` + `lib/security-answer.ts`), definida al crear la
+      cuenta y verificada server-side con la Service Role Key (`lib/supabase/admin.ts`) para poder
+      cambiar la contraseña sin el magic link por mail de Supabase. Flujo en
+      `app/(auth)/forgot-password/` (link desde el login) y `/perfil/seguridad` para que cuentas ya
+      existentes configuren su respuesta. Ver detalle en `tech-stack.md`
+- [x] Mostrar/ocultar contraseña (`components/ui/password-input.tsx`) en login, signup y el campo
+      de nueva contraseña de `/forgot-password`
 
 ---
 
 ## Backlog post-MVP (no bloquea el lanzamiento)
 
-- Recuperación de contraseña (Supabase Auth ya lo soporta, se activa cuando se priorice)
 - Verificación por código de email en cada login/signup (se probó para el MVP y se descartó porque
   requiere conectar un servicio de email propio vía SMTP — el de Supabase por default es solo para
   pruebas, con rate limits muy bajos)

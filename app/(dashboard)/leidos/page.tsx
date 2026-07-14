@@ -32,7 +32,12 @@ export default async function LeidosPage() {
             action={{ label: "Buscar libros", href: "/buscar" }}
           />
         ) : (
-          <BookListWithFilter items={books} showRating />
+          <BookListWithFilter
+            items={books}
+            showRating
+            storageKey="leidos"
+            sortOptions={["date_added", "alphabetical", "rating"]}
+          />
         )}
       </div>
     </div>

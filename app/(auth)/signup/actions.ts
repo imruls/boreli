@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { hashSecurityAnswer } from "@/lib/security-answer";
 import type { AuthActionState } from "@/app/(auth)/login/actions";
 
 export async function signup(
@@ -10,9 +11,17 @@ export async function signup(
 ): Promise<AuthActionState> {
   const email = formData.get("email");
   const password = formData.get("password");
+  const securityAnswer = formData.get("securityAnswer");
 
-  if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
-    return { error: "Completá email y contraseña." };
+  if (
+    typeof email !== "string" ||
+    typeof password !== "string" ||
+    typeof securityAnswer !== "string" ||
+    !email ||
+    !password ||
+    !securityAnswer.trim()
+  ) {
+    return { error: "Completá email, contraseña y la respuesta de seguridad." };
   }
 
   if (password.length < 6) {
@@ -20,7 +29,11 @@ export async function signup(
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { security_answer_hash: hashSecurityAnswer(securityAnswer) } },
+  });
 
   if (error) {
     if (error.message.toLowerCase().includes("already registered")) {

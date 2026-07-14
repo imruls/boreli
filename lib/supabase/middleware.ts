@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const AUTH_PATHS = ["/login", "/signup"];
+const AUTH_PATHS = ["/login", "/signup", "/forgot-password"];
 
 // Refresca la sesión de Supabase en cada request y protege las rutas del
 // dashboard: sin sesión, redirige a /login; con sesión, sacas /login y /signup.

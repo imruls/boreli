@@ -1,7 +1,7 @@
 // Fuente de verdad: data-model.md. Cualquier cambio de modelo empieza ahí, no acá directo.
 
 export type BookStatus = "want_to_read" | "reading" | "read";
-export type BookTag = "physical" | "google_books" | "apple_books" | "kindle";
+export type BookTag = "physical" | "google_books" | "apple_books" | "kindle" | "pdf";
 
 export interface Book {
   id: string;
@@ -23,5 +23,6 @@ export interface UserBook {
   rating: number | null; // 1-5, solo aplica si status === 'read'
   startedAt: string | null;
   finishedAt: string | null;
+  createdAt: string;
   book: Book; // resultado de join con la tabla books
 }

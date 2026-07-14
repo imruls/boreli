@@ -7,7 +7,7 @@ import type { BookTag } from "@/types/book";
 const CHIP_CLASS =
   "rounded-full border border-ink-border px-3.5 text-xs font-semibold text-ink-muted data-[state=on]:border-ink data-[state=on]:bg-ink data-[state=on]:text-cream";
 
-// Multi-select: a diferencia de `tag-filter-chips.tsx` (selección única para
+// Multi-select: a diferencia de `tag-filter-select.tsx` (selección única para
 // filtrar listas), un libro puede tener varios tags de formato a la vez
 // (ej. físico + Kindle), por eso `type="multiple"`.
 export function TagSelector({

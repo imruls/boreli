@@ -32,7 +32,7 @@ export default async function QuieroLeerPage() {
             action={{ label: "Buscar libros", href: "/buscar" }}
           />
         ) : (
-          <BookListWithFilter items={books} />
+          <BookListWithFilter items={books} storageKey="quiero-leer" />
         )}
       </div>
     </div>

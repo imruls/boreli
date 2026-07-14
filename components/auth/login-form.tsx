@@ -6,6 +6,7 @@ import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { login, type AuthActionState } from "@/app/(auth)/login/actions";
 
 const initialState: AuthActionState = { error: null };
@@ -20,11 +21,15 @@ export function LoginForm() {
         <Input id="email" name="email" type="email" autoComplete="email" required />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password">Contraseña</Label>
-        <Input
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Contraseña</Label>
+          <Link href="/forgot-password" className="text-xs text-ink-muted underline underline-offset-4">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           autoComplete="current-password"
           minLength={6}
           required

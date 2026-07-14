@@ -2,7 +2,7 @@
 
 ## Qué es
 **Boreli**: app web (no PWA, sin instalación) para registrar libros que leo, quiero leer
-y ya leí, con rating y tags de formato (físico / Google Books / Apple Books / Kindle).
+y ya leí, con rating y tags de formato (físico / Google Books / Apple Books / Kindle / PDF).
 Mobile-first, con soporte desktop. Acceso 100% vía navegador con URL + login.
 
 ## Cómo usar los documentos de este repo
@@ -37,7 +37,8 @@ Ver `tech-stack.md` para el detalle de cada decisión.
 - No hay progreso de lectura (% o página) en el modelo — se descartó a propósito.
 - La app NO es PWA ni instalable — 100% navegador con URL + login.
 - Sin funciones sociales — cada usuario ve solo su propia data (RLS en Supabase).
-- Auth del MVP es solo login/signup básico (email + password) — recuperación de contraseña y verificación de email quedan para post-MVP.
+- Auth del MVP es login/signup básico (email + password) — la verificación de email queda para post-MVP.
+- Recuperación de contraseña: implementada **sin servicio de email**, con pregunta de seguridad fija para todos los usuarios (`lib/security-question.ts`). La respuesta se guarda hasheada en `user_metadata` (`lib/security-answer.ts`) y el reset (`app/(auth)/forgot-password/`) usa la Service Role Key de Supabase (`lib/supabase/admin.ts`, variable `SUPABASE_SERVICE_ROLE_KEY`) para cambiar la contraseña sin el flujo de magic link por mail. Cuentas creadas antes de este cambio configuran su respuesta desde `/perfil/seguridad`.
 - La carga manual de libros (cuando no aparecen en la búsqueda de Google Books) pide: título, autor, portada (URL) y cantidad de páginas. No pide descripción ni fecha de publicación.
 
 ## Fuera de alcance del MVP

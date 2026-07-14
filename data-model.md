@@ -8,7 +8,7 @@ Fuente de verdad del esquema. Cualquier cambio de modelo empieza acá, no direct
 create extension if not exists "uuid-ossp";
 
 create type book_status as enum ('want_to_read', 'reading', 'read');
-create type book_tag as enum ('physical', 'google_books', 'apple_books', 'kindle');
+create type book_tag as enum ('physical', 'google_books', 'apple_books', 'kindle', 'pdf');
 
 -- Catálogo de libros, compartido entre todos los usuarios (evita duplicar datos de la API)
 create table books (
@@ -80,7 +80,7 @@ si el usuario se equivocó y lo vuelve a `reading`), hay que limpiar el `rating`
 ```ts
 // types/book.ts
 export type BookStatus = 'want_to_read' | 'reading' | 'read';
-export type BookTag = 'physical' | 'google_books' | 'apple_books' | 'kindle';
+export type BookTag = 'physical' | 'google_books' | 'apple_books' | 'kindle' | 'pdf';
 
 export interface Book {
   id: string;
@@ -120,3 +120,17 @@ Campos del formulario manual (subset de `Book`):
 
 `description`, `publishedDate` y `googleBooksId` quedan `null` para libros cargados a mano —
 no se piden en el formulario.
+
+## Migraciones aplicadas después del setup inicial
+
+El `create type book_tag as enum (...)` de más arriba ya incluye `'pdf'`, pero eso solo describe
+el estado deseado para un Supabase nuevo. Sobre una base ya creada (`create type` corrido una sola
+vez en el setup inicial), agregar un valor a un enum existente requiere `alter type`, no volver a
+correr el `create type`:
+
+```sql
+alter type book_tag add value 'pdf';
+```
+
+Corrida en el SQL Editor de Supabase como statement propio (no se puede usar el valor nuevo en la
+misma transacción en la que se agrega).

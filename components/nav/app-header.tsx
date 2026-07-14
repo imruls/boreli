@@ -18,7 +18,7 @@ export function AppHeader({ userEmail }: { userEmail?: string | null }) {
           que logo/nav/avatar no queden desperdigados en pantallas grandes. */}
       <div className="mx-auto flex w-full items-center justify-between lg:max-w-2xl">
         <Link href="/" className="flex items-center gap-2">
-          <LogoMark className="size-7 rounded-lg text-sm" />
+          <LogoMark className="size-8" />
           <span className="font-heading text-sm font-bold tracking-wide text-ink uppercase">
             Boreli
           </span>

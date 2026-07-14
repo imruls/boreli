@@ -6,6 +6,7 @@ export const BOOK_TAG_LABELS: Record<BookTag, string> = {
   google_books: "Google Books",
   apple_books: "Apple Books",
   kindle: "Kindle",
+  pdf: "PDF",
 };
 
-export const BOOK_TAGS: BookTag[] = ["physical", "google_books", "apple_books", "kindle"];
+export const BOOK_TAGS: BookTag[] = ["physical", "google_books", "apple_books", "kindle", "pdf"];

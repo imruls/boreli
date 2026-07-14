@@ -9,11 +9,10 @@ de inventar otros.
 - **Nombre:** Boreli
 - **Logo:** ícono de libro cerrado con separador/marcador, con una "B" en serif dentro. Wordmark
   "BORELI" en mayúsculas, tracking amplio.
-- **Assets necesarios (pendientes):** exportar el logo en **SVG**, en versión ícono solo y versión
-  ícono + wordmark, cada una en las dos variantes de color (para fondo claro y fondo oscuro — el
-  brand kit ya trae ambas). Los PNG que se compartieron tienen el fondo de color incluido; para uso
-  en la web conviene tener versiones con fondo transparente.
-- Ubicación sugerida en el repo: `public/brand/` (`boreli-icon.svg`, `boreli-wordmark.svg`, cada una
+- **Assets necesarios (pendientes):** exportar el logo en **PNG con fondo transparente**, en versión
+  ícono solo y versión ícono + wordmark, cada una en las dos variantes de color (para fondo claro y
+  fondo oscuro — el brand kit ya trae ambas).
+- Ubicación sugerida en el repo: `public/brand/` (`boreli-icon.png`, `boreli-wordmark.png`, cada una
   con sufijo `-light` / `-dark` según la variante de color de fondo donde se use).
 
 ## Paleta
