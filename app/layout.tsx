@@ -16,6 +16,9 @@ const robotoSlab = Roboto_Slab({
 export const metadata: Metadata = {
   title: "Boreli",
   description: "Registrá los libros que leés, querés leer y ya leíste.",
+  appleWebApp: {
+    title: "Boreli",
+  },
 };
 
 export default function RootLayout({
