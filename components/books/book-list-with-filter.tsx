@@ -3,10 +3,7 @@
 import { useMemo, useState } from "react";
 import { TagFilterSelect, type TagFilterValue } from "@/components/books/tag-filter-select";
 import { BookSortSelect } from "@/components/books/book-sort-select";
-import { BookCard } from "@/components/books/book-card";
-import { BookTagBadge } from "@/components/books/book-tag-badge";
-import { RatingStars } from "@/components/books/rating-stars";
-import { BookEditMenuButton } from "@/components/books/book-edit-menu-button";
+import { UserBookCard } from "@/components/books/user-book-card";
 import { sortUserBooks, type BookSortOption } from "@/lib/book-sort";
 import { useLocalStorageState } from "@/lib/use-local-storage-state";
 import type { UserBook } from "@/types/book";
@@ -51,32 +48,7 @@ export function BookListWithFilter({
       ) : (
         <div className="flex flex-col gap-2.5">
           {filtered.map((userBook) => (
-            <BookCard
-              key={userBook.id}
-              title={userBook.book.title}
-              authors={userBook.book.authors}
-              coverUrl={userBook.book.coverUrl}
-              trustedCover={Boolean(userBook.book.googleBooksId)}
-              meta={
-                userBook.tags.length > 0 || (showRating && userBook.rating) ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    {showRating && userBook.rating ? <RatingStars rating={userBook.rating} /> : null}
-                    {userBook.tags.map((tag) => (
-                      <BookTagBadge key={tag} tag={tag} />
-                    ))}
-                  </div>
-                ) : undefined
-              }
-              action={
-                <BookEditMenuButton
-                  userBookId={userBook.id}
-                  bookTitle={userBook.book.title}
-                  currentStatus={userBook.status}
-                  currentTags={userBook.tags}
-                  currentRating={userBook.rating}
-                />
-              }
-            />
+            <UserBookCard key={userBook.id} userBook={userBook} showRating={showRating} />
           ))}
         </div>
       )}

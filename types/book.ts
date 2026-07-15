@@ -21,6 +21,7 @@ export interface UserBook {
   status: BookStatus;
   tags: BookTag[];
   rating: number | null; // 1-5, solo aplica si status === 'read'
+  note: string | null; // reseña libre, máx 300 caracteres, solo aplica si status === 'read'
   startedAt: string | null;
   finishedAt: string | null;
   createdAt: string;

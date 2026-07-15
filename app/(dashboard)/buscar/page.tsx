@@ -87,14 +87,14 @@ export default function BuscarPage() {
     setRetryToken((token) => token + 1);
   }
 
-  function handleAddToLibrary(status: BookStatus, tags: BookTag[]) {
+  function handleAddToLibrary(status: BookStatus, tags: BookTag[], rating?: number, note?: string) {
     const book = selectedBook;
     if (!book) return;
 
     setSaveError(null);
     startSaving(async () => {
       try {
-        await addBookToLibrary(book, status, tags);
+        await addBookToLibrary(book, status, tags, rating, note);
         setSelectedBook(null);
         showConfirmation(STATUS_CONFIRMATION[status]);
       } catch {

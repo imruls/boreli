@@ -28,11 +28,15 @@ Ver `tech-stack.md` para el detalle de cada decisión.
 - Build: `pnpm build`
 - Lint: `pnpm lint`
 - Type check: `pnpm tsc --noEmit`
+- Migraciones de DB (ver `data-model.md`): `pnpm exec supabase migration new <nombre>` para crear una,
+  `pnpm db:push` para aplicar las pendientes al proyecto de Supabase linkeado (`pnpm db:login` +
+  `pnpm db:link` una sola vez por máquina)
 
 ## Reglas de negocio clave (no romper)
 - `status` es un único valor por libro (`want_to_read` | `reading` | `read`) — nunca simultáneo.
 - Puede haber múltiples libros con `status = 'reading'` al mismo tiempo.
 - `rating` (1-5) solo puede existir cuando `status = 'read'` — **forzado con un CHECK constraint en la DB**, no solo en la UI (ver `data-model.md`).
+- `note` (reseña personal, texto libre, hasta 300 caracteres) es **opcional** y solo puede existir cuando `status = 'read'` — mismo criterio que `rating`, también forzado con un CHECK constraint en la DB (`note_requires_read` en `data-model.md`). A diferencia del rating, no es obligatoria para marcar un libro como leído. Se edita junto al rating en `AddToLibrarySheet`/`EditBookSheet`, y se puede volver a leer tocando la card del libro (`BookDetailSheet`), que también muestra estado y etiquetas con un botón "Editar".
 - `tags` es un array — un libro puede tener varios tags de formato a la vez.
 - No hay progreso de lectura (% o página) en el modelo — se descartó a propósito.
 - La app NO es PWA ni instalable — 100% navegador con URL + login.
@@ -46,7 +50,7 @@ Ver `tech-stack.md` para el detalle de cada decisión.
 - Sincronización automática con Kindle/Apple Books (no existen APIs públicas — los tags son manuales)
 - Instalación como PWA
 - Progreso de lectura (% o página actual)
-- Import de CSV, estadísticas, notas/reseña personal, modo oscuro, reordenar manualmente "quiero leer" → todo esto es backlog post-MVP, ver `ROADMAP.md`
+- Import de CSV, estadísticas, modo oscuro, reordenar manualmente "quiero leer" → todo esto es backlog post-MVP, ver `ROADMAP.md`
 
 ## Estructura
 Rutas en `/app`, componentes en `/components`, helpers en `/lib`, tipos en `/types`.

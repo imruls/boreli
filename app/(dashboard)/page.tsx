@@ -3,8 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { Search, ChevronRight, Clock, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getLibraryCounts, getUserBooksByStatus } from "@/lib/queries/user-books";
-import { BookCard } from "@/components/books/book-card";
-import { BookEditMenuButton } from "@/components/books/book-edit-menu-button";
+import { UserBookCard } from "@/components/books/user-book-card";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -34,23 +33,7 @@ export default async function HomePage() {
           <h2 className="text-sm font-semibold text-ink">Leyendo actualmente</h2>
           <div className="flex flex-col gap-3">
             {reading.map((userBook) => (
-              <BookCard
-                key={userBook.id}
-                title={userBook.book.title}
-                authors={userBook.book.authors}
-                coverUrl={userBook.book.coverUrl}
-                trustedCover={Boolean(userBook.book.googleBooksId)}
-                coverSize="lg"
-                action={
-                  <BookEditMenuButton
-                    userBookId={userBook.id}
-                    bookTitle={userBook.book.title}
-                    currentStatus={userBook.status}
-                    currentTags={userBook.tags}
-                    currentRating={userBook.rating}
-                  />
-                }
-              />
+              <UserBookCard key={userBook.id} userBook={userBook} coverSize="lg" />
             ))}
           </div>
         </section>

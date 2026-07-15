@@ -8,6 +8,7 @@
 | Frontend | **Next.js (App Router) + TypeScript + Tailwind CSS** | Mobile-first fácil, gran comunidad, mucha documentación para nivel básico/intermedio |
 | Componentes UI | **shadcn/ui** | Componentes prearmados, minimalistas, 100% personalizables — buen diseño desde el día 1 sin diseñar cada botón desde cero |
 | Backend + Auth + DB | **Supabase** (Postgres) | Auth multi-usuario lista para usar (login/signup con email + password en el MVP), reglas de acceso por fila (RLS) para que cada usuario vea solo su data, sin escribir backend propio |
+| Migraciones de DB | **Supabase CLI** (`supabase` como devDependency) | Versiona los cambios de esquema en `supabase/migrations/` junto con el código, en vez de correr SQL a mano en el dashboard — ver `data-model.md` |
 | API de libros | **Google Books API** | Gratuita, sin OAuth para búsquedas simples |
 | Hosting | **Vercel** (free tier) | Deploy directo desde GitHub, pensado para Next.js |
 

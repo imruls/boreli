@@ -7,7 +7,7 @@ const STATUS_LABELS: Record<BookStatus, string> = {
   read: "Leído",
 };
 
-const HEADERS = ["Título", "Autor", "Estado", "Tags", "Rating", "Empezado", "Terminado"];
+const HEADERS = ["Título", "Autor", "Estado", "Tags", "Rating", "Reseña", "Empezado", "Terminado"];
 
 // RFC 4180: solo hace falta entrecomillar (y escapar `"` duplicándola) si el
 // campo tiene coma, comilla o salto de línea — evita citar todo el archivo.
@@ -29,6 +29,7 @@ function userBookToRow(userBook: UserBook): string[] {
     STATUS_LABELS[userBook.status],
     userBook.tags.map((tag) => BOOK_TAG_LABELS[tag]).join(", "),
     userBook.rating !== null ? String(userBook.rating) : "",
+    userBook.note ?? "",
     formatDate(userBook.startedAt),
     formatDate(userBook.finishedAt),
   ];

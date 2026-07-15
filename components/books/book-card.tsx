@@ -20,6 +20,11 @@ interface BookCardProps {
   footer?: React.ReactNode;
   action?: React.ReactNode;
   className?: string;
+  // Si se pasa, toda la card (salvo `action`, que gestiona su propio click)
+  // se vuelve tocable — usado por `UserBookCard` para abrir el detalle del
+  // libro. Sin esto la card es puramente presentacional (ej. resultados de
+  // Buscar, que solo reaccionan al botón "+" de `action`).
+  onClick?: () => void;
 }
 
 // Card horizontal reutilizable: cover + título/autor + meta (rating/tag) +
@@ -34,6 +39,7 @@ export function BookCard({
   footer,
   action,
   className,
+  onClick,
 }: BookCardProps) {
   // `object-contain` (en vez de `object-cover`) para que la portada se vea
   // completa siempre, sin recortar bordes por ajustarse al contenedor —
@@ -44,8 +50,22 @@ export function BookCard({
 
   return (
     <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       className={cn(
         "flex items-center gap-3 rounded-2xl border border-ink-border bg-cream p-3",
+        onClick && "cursor-pointer focus-visible:ring-2 focus-visible:ring-ink/50 focus-visible:outline-none",
         className,
       )}
     >

@@ -1,13 +1,14 @@
 import type { LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, Pencil, ShieldCheck, LogOut, Trash2 } from "lucide-react";
+import { ChevronRight, Pencil, ShieldCheck, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/(dashboard)/actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/nav/page-header";
 import { ExportLibraryButton } from "@/components/export-library-button";
+import { DeleteAccountSheet } from "@/components/auth/delete-account-sheet";
 
 export const metadata: Metadata = {
   title: "Perfil — Boreli",
@@ -21,6 +22,7 @@ export default async function PerfilPage() {
 
   const email = user?.email ?? "";
   const initial = email ? email.charAt(0).toUpperCase() : "?";
+  const hasSecurityAnswer = typeof user?.user_metadata?.security_answer_hash === "string";
 
   return (
     <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-8">
@@ -58,10 +60,7 @@ export default async function PerfilPage() {
 
       <div className="flex flex-col gap-1 px-4 sm:px-6">
         <p className="text-xs font-bold tracking-wide text-destructive uppercase">Zona peligrosa</p>
-        <div className="flex items-center gap-3 py-3 text-sm font-medium text-destructive opacity-70">
-          <Trash2 className="size-4" />
-          Eliminar cuenta
-        </div>
+        <DeleteAccountSheet hasSecurityAnswer={hasSecurityAnswer} />
       </div>
     </div>
   );

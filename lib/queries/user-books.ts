@@ -21,6 +21,7 @@ type UserBookRow = {
   status: BookStatus;
   tags: BookTag[] | null;
   rating: number | null;
+  note: string | null;
   started_at: string | null;
   finished_at: string | null;
   created_at: string;
@@ -28,7 +29,7 @@ type UserBookRow = {
 };
 
 const USER_BOOK_SELECT =
-  "id, user_id, book_id, status, tags, rating, started_at, finished_at, created_at, " +
+  "id, user_id, book_id, status, tags, rating, note, started_at, finished_at, created_at, " +
   "book:books(id, google_books_id, title, authors, cover_url, page_count, description, published_date)";
 
 function mapBook(row: BookRow | null, fallbackBookId: string): Book {
@@ -65,6 +66,7 @@ function mapUserBook(row: UserBookRow): UserBook {
     status: row.status,
     tags: row.tags ?? [],
     rating: row.rating,
+    note: row.note,
     startedAt: row.started_at,
     finishedAt: row.finished_at,
     createdAt: row.created_at,

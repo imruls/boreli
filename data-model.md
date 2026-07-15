@@ -31,12 +31,17 @@ create table user_books (
   status book_status not null default 'want_to_read',
   tags book_tag[] default '{}',
   rating smallint check (rating between 1 and 5),
+  note text,
   started_at timestamptz,
   finished_at timestamptz,
   created_at timestamptz default now(),
   unique (user_id, book_id),
   -- el rating solo puede existir si el libro ya está marcado como leído
-  constraint rating_requires_read check (rating is null or status = 'read')
+  constraint rating_requires_read check (rating is null or status = 'read'),
+  -- la reseña es opcional y de hasta 300 caracteres, y (mismo criterio que el
+  -- rating) solo puede existir si el libro ya está marcado como leído
+  constraint note_length check (note is null or char_length(note) <= 300),
+  constraint note_requires_read check (note is null or status = 'read')
 );
 
 -- RLS: cada usuario solo puede ver/editar sus propios registros
@@ -75,6 +80,14 @@ Importante para el flujo de cambio de estado: si un libro pasa de `read` a otro 
 si el usuario se equivocó y lo vuelve a `reading`), hay que limpiar el `rating` (`update ... set rating
 = null`) en la misma transacción que cambia el `status`, o el update va a fallar por el constraint.
 
+### Nota sobre el constraint de reseña (`note`)
+`note` es una reseña personal de texto libre, opcional, de hasta 300 caracteres (`note_length`) y —
+mismo criterio que `rating` — solo puede tener valor si el libro está en `status = 'read'`
+(`note_requires_read`). A diferencia del rating, no es obligatoria al marcar un libro como leído.
+
+Aplica la misma regla que con el rating: al mover un libro **fuera** de `read`, hay que limpiar
+`note` (`= null`) en la misma operación que cambia el `status`, o el update falla por el constraint.
+
 ## Tipos TypeScript compartidos
 
 ```ts
@@ -100,6 +113,7 @@ export interface UserBook {
   status: BookStatus;
   tags: BookTag[];
   rating: number | null; // 1-5, solo aplica si status === 'read'
+  note: string | null; // reseña libre, máx 300 caracteres, solo aplica si status === 'read'
   startedAt: string | null;
   finishedAt: string | null;
   book: Book; // resultado de join con la tabla books
@@ -132,5 +146,39 @@ correr el `create type`:
 alter type book_tag add value 'pdf';
 ```
 
-Corrida en el SQL Editor de Supabase como statement propio (no se puede usar el valor nuevo en la
-misma transacción en la que se agrega).
+Esta se corrió a mano en el SQL Editor de Supabase (como statement propio — no se puede usar el
+valor nuevo en la misma transacción en la que se agrega), antes de que el repo tuviera CLI de
+migraciones.
+
+### Reseña personal (`note`) en `user_books`
+
+El `create table user_books` de más arriba ya incluye la columna `note` y sus constraints, pero eso
+solo describe el estado deseado para un Supabase nuevo. Esta sí quedó versionada como migración del
+Supabase CLI (ver sección siguiente): `supabase/migrations/20260715134119_add_user_books_note.sql`.
+
+```sql
+alter table user_books
+  add column note text,
+  add constraint note_length check (note is null or char_length(note) <= 300),
+  add constraint note_requires_read check (note is null or status = 'read');
+```
+
+## Supabase CLI y migraciones versionadas
+
+A partir de la migración de `note`, el repo usa el [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)
+(`supabase` como devDependency, ver `package.json`) en vez de correr SQL a mano — así los cambios de
+esquema quedan versionados en `supabase/migrations/` junto con el resto del código.
+
+Flujo para una migración nueva:
+
+```bash
+pnpm exec supabase migration new nombre_de_la_migracion   # crea supabase/migrations/<timestamp>_nombre.sql vacío
+# escribir el SQL en ese archivo
+pnpm db:push                                              # aplica las migraciones pendientes al proyecto linkeado
+```
+
+`pnpm db:link` (una sola vez por máquina, requiere haber corrido `pnpm db:login` antes para
+autenticarse) y `pnpm db:push` están en `package.json` como scripts cortos sobre `supabase link` /
+`supabase db push`. Requieren la contraseña de la base (Settings → Database en el dashboard de
+Supabase) la primera vez — no está en `.env.local` a propósito, hay que ingresarla a mano en el
+prompt del CLI.

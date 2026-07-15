@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { NOTE_MAX_LENGTH } from "@/lib/book-note";
 import type { Book, BookStatus, BookTag } from "@/types/book";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -58,7 +59,20 @@ async function resolveBookId(supabase: SupabaseServerClient, book: Book): Promis
 // (o crea) la fila en `books` y hace upsert en `user_books` por
 // (user_id, book_id) — así re-agregar un libro ya existente actualiza el
 // status/tags en vez de duplicar la fila.
-export async function addBookToLibrary(book: Book, status: BookStatus, tags: BookTag[]) {
+export async function addBookToLibrary(
+  book: Book,
+  status: BookStatus,
+  tags: BookTag[],
+  rating?: number,
+  note?: string,
+) {
+  if (status === "read" && (!rating || rating < 1 || rating > 5)) {
+    throw new Error("El rating (1-5) es obligatorio para marcar un libro como leído");
+  }
+  if (note && note.length > NOTE_MAX_LENGTH) {
+    throw new Error(`La reseña no puede superar los ${NOTE_MAX_LENGTH} caracteres`);
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -73,12 +87,10 @@ export async function addBookToLibrary(book: Book, status: BookStatus, tags: Boo
       book_id: bookId,
       status,
       tags,
-      // El rating obligatorio al marcar como leído (Semana 3) todavía no
-      // existe acá, así que nunca lo tocamos al pasar a "read". Si el status
-      // es otro, lo limpiamos por las dudas: el constraint `rating_requires_read`
-      // (data-model.md) rechaza el update si queda un rating viejo con un
-      // status que no sea "read".
-      rating: status === "read" ? undefined : null,
+      // Fuera de "leído" no puede quedar rating ni reseña (constraints
+      // `rating_requires_read` / `note_requires_read` en data-model.md).
+      rating: status === "read" ? (rating as number) : null,
+      note: status === "read" ? (note?.trim() || null) : null,
       started_at: status === "reading" ? new Date().toISOString() : null,
       finished_at: status === "read" ? new Date().toISOString() : null,
     },

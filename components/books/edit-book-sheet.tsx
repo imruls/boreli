@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { RatingInput } from "@/components/books/rating-input";
+import { NoteInput } from "@/components/books/note-input";
 import { TagSelector } from "@/components/books/tag-selector";
 import { cn } from "@/lib/utils";
 import type { BookStatus, BookTag } from "@/types/book";
@@ -38,6 +39,7 @@ export function EditBookSheet({
   currentStatus,
   currentTags,
   currentRating,
+  currentNote,
   onSave,
   onDelete,
   isSaving = false,
@@ -50,7 +52,8 @@ export function EditBookSheet({
   currentStatus: BookStatus;
   currentTags: BookTag[];
   currentRating: number | null;
-  onSave?: (status: BookStatus, tags: BookTag[], rating?: number) => void;
+  currentNote: string | null;
+  onSave?: (status: BookStatus, tags: BookTag[], rating?: number, note?: string) => void;
   onDelete?: () => void;
   isSaving?: boolean;
   isDeleting?: boolean;
@@ -59,6 +62,7 @@ export function EditBookSheet({
   const [selectedStatus, setSelectedStatus] = useState<BookStatus>(currentStatus);
   const [tags, setTags] = useState<BookTag[]>(currentTags);
   const [rating, setRating] = useState<number | null>(currentRating);
+  const [note, setNote] = useState(currentNote ?? "");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const isBusy = isSaving || isDeleting;
@@ -67,7 +71,12 @@ export function EditBookSheet({
 
   function handleSave() {
     if (!canSave) return;
-    onSave?.(selectedStatus, tags, needsRating ? (rating as number) : undefined);
+    onSave?.(
+      selectedStatus,
+      tags,
+      needsRating ? (rating as number) : undefined,
+      needsRating ? note : undefined,
+    );
   }
 
   function handleOpenChange(next: boolean) {
@@ -159,12 +168,19 @@ export function EditBookSheet({
               </div>
 
               {needsRating ? (
-                <div className="flex flex-col gap-1.5 rounded-lg border border-ink-border px-3 py-3">
-                  <span className="text-xs font-semibold text-ink-muted">
-                    Calificación (obligatoria para marcar como leído)
-                  </span>
-                  <RatingInput value={rating} onChange={setRating} />
-                </div>
+                <>
+                  <div className="flex flex-col gap-1.5 rounded-lg border border-ink-border px-3 py-3">
+                    <span className="text-xs font-semibold text-ink-muted">
+                      Calificación (obligatoria para marcar como leído)
+                    </span>
+                    <RatingInput value={rating} onChange={setRating} />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-ink-muted">Reseña (opcional)</span>
+                    <NoteInput value={note} onChange={setNote} />
+                  </div>
+                </>
               ) : null}
 
               {error ? <p className="text-sm text-destructive">{error}</p> : null}

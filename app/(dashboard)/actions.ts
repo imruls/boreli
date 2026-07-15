@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getAllUserBooks } from "@/lib/queries/user-books";
 import { buildLibraryCsv, buildLibraryCsvFilename } from "@/lib/csv-export";
+import { NOTE_MAX_LENGTH } from "@/lib/book-note";
 import type { BookStatus, BookTag } from "@/types/book";
 
 export async function logout() {
@@ -28,11 +29,14 @@ export async function logout() {
 // fechas en ese caso.
 export async function updateUserBook(
   userBookId: string,
-  input: { status: BookStatus; tags: BookTag[]; rating?: number },
+  input: { status: BookStatus; tags: BookTag[]; rating?: number; note?: string },
 ) {
-  const { status, tags, rating } = input;
+  const { status, tags, rating, note } = input;
   if (status === "read" && (!rating || rating < 1 || rating > 5)) {
     throw new Error("El rating (1-5) es obligatorio para marcar un libro como leído");
+  }
+  if (note && note.length > NOTE_MAX_LENGTH) {
+    throw new Error(`La reseña no puede superar los ${NOTE_MAX_LENGTH} caracteres`);
   }
 
   const supabase = await createClient();
@@ -53,13 +57,15 @@ export async function updateUserBook(
     status: BookStatus;
     tags: BookTag[];
     rating: number | null;
+    note: string | null;
     started_at?: string;
     finished_at?: string;
   } = {
     status,
     tags,
-    // Fuera de "leído" no puede quedar rating (constraint de la DB).
+    // Fuera de "leído" no puede quedar rating ni reseña (constraints de la DB).
     rating: status === "read" ? (rating as number) : null,
+    note: status === "read" ? (note?.trim() || null) : null,
   };
   if (status === "reading" && current.status !== "reading") {
     update.started_at = new Date().toISOString();

@@ -118,9 +118,9 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
 
 ## Buffer / semana 5 (si hace falta)
 
-- [ ] Ajustes de UX detectados al usarla vos mismo unos días
-- [ ] Revisión final de dominio/deploy
-- [ ] Actualizar `CLAUDE.md` con cualquier convención nueva que haya surgido
+- [x] Ajustes de UX detectados al usarla vos mismo unos días
+- [x] Revisión final de dominio/deploy
+- [x] Actualizar `CLAUDE.md` con cualquier convención nueva que haya surgido
 - [x] Recuperación de contraseña **sin servicio de email**: pregunta de seguridad fija para todos
       los usuarios (`lib/security-question.ts` + `lib/security-answer.ts`), definida al crear la
       cuenta y verificada server-side con la Service Role Key (`lib/supabase/admin.ts`) para poder
@@ -129,6 +129,16 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
       existentes configuren su respuesta. Ver detalle en `tech-stack.md`
 - [x] Mostrar/ocultar contraseña (`components/ui/password-input.tsx`) en login, signup y el campo
       de nueva contraseña de `/forgot-password`
+- [x] Reseña personal por libro leído (`note` en `user_books`, texto libre hasta 300 caracteres,
+      opcional, solo aplica si `status = 'read'` — constraint `note_requires_read` en
+      `data-model.md`, mismo criterio que `rating` pero sin ser obligatoria). Se edita junto al
+      rating en `AddToLibrarySheet`/`EditBookSheet` (`components/books/note-input.tsx`, con
+      contador de caracteres). Se agregó además `components/books/book-detail-sheet.tsx`, que se
+      abre al tocar cualquier card de la biblioteca (Home/Quiero leer/Leídos) y muestra estado,
+      etiquetas, rating y reseña de solo lectura con un botón "Editar" que abre el sheet de
+      edición. Esto reemplazó a `components/books/book-edit-menu-button.tsx` por
+      `components/books/user-book-card.tsx`, que ahora administra ambos sheets (detalle + edición)
+      desde un solo componente por card.
 
 ---
 
@@ -139,7 +149,6 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
   pruebas, con rate limits muy bajos)
 - Import de CSV (para cerrar el círculo de portabilidad de datos)
 - Estadísticas (libros leídos por año, por género, páginas totales)
-- Notas/reseña personal por libro
 - Modo oscuro
 - Reordenar manualmente la lista de "quiero leer" (prioridad)
 
