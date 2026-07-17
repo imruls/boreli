@@ -163,6 +163,44 @@ alter table user_books
   add constraint note_requires_read check (note is null or status = 'read');
 ```
 
+## Foto de perfil y nombre de usuario
+
+A diferencia de los libros (que tienen su propia tabla), el nombre de usuario y la foto de perfil
+son datos de la cuenta, no del dominio de libros — y la app no tiene funciones sociales que
+necesiten consultarlos por otro lado (join, búsqueda, unicidad). Por eso, **no viven en una tabla
+`profiles` nueva**: siguen el mismo criterio que `security_answer_hash` (`lib/security-answer.ts`)
+y se guardan directo en `user_metadata` de Supabase Auth, actualizados con
+`supabase.auth.updateUser({ data: {...} })`:
+
+- `display_name`: string, opcional, hasta 40 caracteres. Si no está seteado, la UI cae al email
+  (mismo fallback que ya existía).
+- `avatar_url`: string (URL pública), opcional. Apunta a un archivo en el bucket `avatars` de
+  Supabase Storage.
+
+### Bucket `avatars`
+
+Creado en `supabase/migrations/20260717010201_add_avatars_bucket.sql`. Público (mismo criterio que
+`cover_url` en `books`: se resuelve con una URL directa, sin signed URLs) pero con policies en
+`storage.objects` que solo permiten a cada usuario escribir/borrar su propio archivo, con la
+convención de path `{user_id}/avatar` (sin extensión — Storage sirve el `content-type` real del
+objeto igual):
+
+```sql
+insert into storage.buckets (id, name, public) values ('avatars', 'avatars', true);
+
+create policy "select_avatars" on storage.objects for select
+  using (bucket_id = 'avatars');
+create policy "insert_own_avatar" on storage.objects for insert
+  with check (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+create policy "update_own_avatar" on storage.objects for update
+  using (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+create policy "delete_own_avatar" on storage.objects for delete
+  using (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+```
+
+Cada subida usa `upsert: true` sobre la misma key, así que al cambiar de foto se pisa la anterior en
+vez de acumular archivos huérfanos.
+
 ## Supabase CLI y migraciones versionadas
 
 A partir de la migración de `note`, el repo usa el [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)

@@ -1,0 +1,6 @@
+-- Archivo vacío generado por un intento fallido de `supabase migration new`
+-- (error de permisos escribiendo telemetría local, no relacionado al
+-- esquema) que ya quedó aplicado como no-op en el historial de migraciones
+-- remoto. El SQL real de este cambio vive en
+-- 20260717010201_add_avatars_bucket.sql. Se deja este archivo vacío en vez
+-- de borrarlo para no desincronizar el historial local con el remoto.

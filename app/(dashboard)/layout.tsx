@@ -8,10 +8,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const avatarUrl =
+    typeof user?.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null;
 
   return (
     <div className="flex min-h-screen flex-1 flex-col">
-      <AppHeader userEmail={user?.email} />
+      <AppHeader userEmail={user?.email} avatarUrl={avatarUrl} />
       {/* El header y el bottom nav quedan full-bleed; el contenido se centra
           y se limita en ancho a partir de `lg` para que las listas de una
           sola columna no se estiren de punta a punta en pantallas grandes. */}

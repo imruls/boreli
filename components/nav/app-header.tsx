@@ -2,12 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS, isNavItemActive } from "@/components/nav/nav-items";
 
-export function AppHeader({ userEmail }: { userEmail?: string | null }) {
+export function AppHeader({
+  userEmail,
+  avatarUrl,
+}: {
+  userEmail?: string | null;
+  avatarUrl?: string | null;
+}) {
   const pathname = usePathname();
   const initial = userEmail ? userEmail.charAt(0).toUpperCase() : "?";
 
@@ -45,6 +51,7 @@ export function AppHeader({ userEmail }: { userEmail?: string | null }) {
 
         <Link href="/perfil" aria-label="Ir a Perfil">
           <Avatar>
+            {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
             <AvatarFallback className="bg-ink-border text-ink">{initial}</AvatarFallback>
           </Avatar>
         </Link>

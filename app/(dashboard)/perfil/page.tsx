@@ -1,10 +1,9 @@
-import type { LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, Pencil, ShieldCheck, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/(dashboard)/actions";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/nav/page-header";
 import { ExportLibraryButton } from "@/components/export-library-button";
@@ -21,7 +20,13 @@ export default async function PerfilPage() {
   } = await supabase.auth.getUser();
 
   const email = user?.email ?? "";
-  const initial = email ? email.charAt(0).toUpperCase() : "?";
+  const displayName =
+    typeof user?.user_metadata?.display_name === "string" && user.user_metadata.display_name
+      ? user.user_metadata.display_name
+      : null;
+  const avatarUrl =
+    typeof user?.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null;
+  const initial = (displayName ?? email).charAt(0).toUpperCase() || "?";
   const hasSecurityAnswer = typeof user?.user_metadata?.security_answer_hash === "string";
 
   return (
@@ -30,13 +35,22 @@ export default async function PerfilPage() {
 
       <div className="flex flex-col items-center gap-2 px-4 sm:px-6">
         <Avatar size="lg">
+          {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
           <AvatarFallback className="bg-ink-border text-base text-ink">{initial}</AvatarFallback>
         </Avatar>
+        {displayName ? <p className="text-sm font-medium text-ink">{displayName}</p> : null}
         <p className="text-sm text-ink-muted">{email}</p>
       </div>
 
       <div className="flex flex-col px-4 sm:px-6">
-        <ProfileRow icon={Pencil} label="Editar perfil" />
+        <Link
+          href="/perfil/editar"
+          className="flex items-center gap-3 border-b border-ink-border py-3 text-sm font-medium text-ink"
+        >
+          <Pencil className="size-4 text-ink-muted" />
+          <span className="flex-1">Editar perfil</span>
+          <ChevronRight className="size-4 text-ink-muted" />
+        </Link>
         <Link
           href="/perfil/seguridad"
           className="flex items-center gap-3 border-b border-ink-border py-3 text-sm font-medium text-ink"
@@ -62,18 +76,6 @@ export default async function PerfilPage() {
         <p className="text-xs font-bold tracking-wide text-destructive uppercase">Zona peligrosa</p>
         <DeleteAccountSheet hasSecurityAnswer={hasSecurityAnswer} />
       </div>
-    </div>
-  );
-}
-
-// "Editar perfil" queda solo visual por ahora (sin destino): todavía no hay
-// funcionalidad construida para esa pantalla. "Seguridad" ya tiene destino
-// propio (ver Link arriba, hacia /perfil/seguridad).
-function ProfileRow({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
-  return (
-    <div className="flex items-center gap-3 border-b border-ink-border py-3 text-sm font-medium text-ink-muted">
-      <Icon className="size-4" />
-      {label}
     </div>
   );
 }
