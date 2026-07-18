@@ -2,6 +2,7 @@
 
 export type BookStatus = "want_to_read" | "reading" | "read";
 export type BookTag = "physical" | "google_books" | "apple_books" | "kindle" | "pdf";
+export type ProgressType = "percent" | "pages";
 
 export interface Book {
   id: string;
@@ -22,6 +23,9 @@ export interface UserBook {
   tags: BookTag[];
   rating: number | null; // 1-5, solo aplica si status === 'read'
   note: string | null; // reseña libre, máx 300 caracteres, solo aplica si status === 'read'
+  progressType: ProgressType | null; // solo aplica si status === 'reading'
+  progressCurrent: number | null; // 0-100 si progressType === 'percent', página actual si === 'pages'
+  progressTotalPages: number | null; // solo aplica si progressType === 'pages'
   startedAt: string | null;
   finishedAt: string | null;
   createdAt: string;

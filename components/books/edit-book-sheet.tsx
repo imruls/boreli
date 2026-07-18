@@ -15,8 +15,9 @@ import { Separator } from "@/components/ui/separator";
 import { RatingInput } from "@/components/books/rating-input";
 import { NoteInput } from "@/components/books/note-input";
 import { TagSelector } from "@/components/books/tag-selector";
+import { ProgressInput, type ProgressValue } from "@/components/books/progress-input";
 import { cn } from "@/lib/utils";
-import type { BookStatus, BookTag } from "@/types/book";
+import type { BookStatus, BookTag, ProgressType } from "@/types/book";
 
 const OPTIONS: { status: BookStatus; label: string; icon: LucideIcon }[] = [
   { status: "want_to_read", label: "Quiero leer", icon: Clock },
@@ -36,10 +37,14 @@ export function EditBookSheet({
   open,
   onOpenChange,
   bookTitle,
+  bookPageCount,
   currentStatus,
   currentTags,
   currentRating,
   currentNote,
+  currentProgressType,
+  currentProgressCurrent,
+  currentProgressTotalPages,
   onSave,
   onDelete,
   isSaving = false,
@@ -49,11 +54,21 @@ export function EditBookSheet({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bookTitle?: string;
+  bookPageCount?: number | null;
   currentStatus: BookStatus;
   currentTags: BookTag[];
   currentRating: number | null;
   currentNote: string | null;
-  onSave?: (status: BookStatus, tags: BookTag[], rating?: number, note?: string) => void;
+  currentProgressType?: ProgressType | null;
+  currentProgressCurrent?: number | null;
+  currentProgressTotalPages?: number | null;
+  onSave?: (
+    status: BookStatus,
+    tags: BookTag[],
+    rating?: number,
+    note?: string,
+    progress?: ProgressValue,
+  ) => void;
   onDelete?: () => void;
   isSaving?: boolean;
   isDeleting?: boolean;
@@ -63,11 +78,21 @@ export function EditBookSheet({
   const [tags, setTags] = useState<BookTag[]>(currentTags);
   const [rating, setRating] = useState<number | null>(currentRating);
   const [note, setNote] = useState(currentNote ?? "");
+  const [progress, setProgress] = useState<ProgressValue>({
+    progressType: currentProgressType ?? null,
+    progressCurrent: currentProgressCurrent ?? null,
+    progressTotalPages: currentProgressTotalPages ?? null,
+  });
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const isBusy = isSaving || isDeleting;
   const needsRating = selectedStatus === "read";
-  const canSave = !needsRating || rating !== null;
+  const showsProgress = selectedStatus === "reading";
+  const canSaveProgress =
+    progress.progressType === null ||
+    (progress.progressCurrent !== null &&
+      (progress.progressType === "percent" || Boolean(progress.progressTotalPages)));
+  const canSave = (!needsRating || rating !== null) && (!showsProgress || canSaveProgress);
 
   function handleSave() {
     if (!canSave) return;
@@ -76,6 +101,7 @@ export function EditBookSheet({
       tags,
       needsRating ? (rating as number) : undefined,
       needsRating ? note : undefined,
+      showsProgress ? progress : undefined,
     );
   }
 
@@ -166,6 +192,19 @@ export function EditBookSheet({
                 <span className="text-xs font-semibold text-ink-muted">Formato</span>
                 <TagSelector value={tags} onChange={setTags} />
               </div>
+
+              {showsProgress ? (
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-ink-muted">
+                    Progreso de lectura (opcional)
+                  </span>
+                  <ProgressInput
+                    value={progress}
+                    onChange={setProgress}
+                    bookPageCount={bookPageCount}
+                  />
+                </div>
+              ) : null}
 
               {needsRating ? (
                 <>

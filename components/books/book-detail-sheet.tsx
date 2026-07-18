@@ -12,7 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { BookTagBadge } from "@/components/books/book-tag-badge";
 import { RatingStars } from "@/components/books/rating-stars";
-import type { BookStatus, BookTag } from "@/types/book";
+import { ProgressBar } from "@/components/books/progress-bar";
+import { hasProgress } from "@/lib/book-progress";
+import type { BookStatus, BookTag, ProgressType } from "@/types/book";
 
 const STATUS_INFO: Record<BookStatus, { label: string; icon: LucideIcon }> = {
   want_to_read: { label: "Quiero leer", icon: Clock },
@@ -33,6 +35,9 @@ export function BookDetailSheet({
   tags,
   rating,
   note,
+  progressType,
+  progressCurrent,
+  progressTotalPages,
   onEdit,
 }: {
   open: boolean;
@@ -42,6 +47,9 @@ export function BookDetailSheet({
   tags: BookTag[];
   rating: number | null;
   note: string | null;
+  progressType?: ProgressType | null;
+  progressCurrent?: number | null;
+  progressTotalPages?: number | null;
   onEdit?: () => void;
 }) {
   const { label, icon: Icon } = STATUS_INFO[status];
@@ -77,6 +85,24 @@ export function BookDetailSheet({
               <p className="text-sm text-ink-muted">Sin etiquetas</p>
             )}
           </div>
+
+          {status === "reading" ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-ink-muted">Progreso</span>
+              {hasProgress({
+                progressType: progressType ?? null,
+                progressCurrent: progressCurrent ?? null,
+              }) ? (
+                <ProgressBar
+                  progressType={progressType ?? null}
+                  progressCurrent={progressCurrent ?? null}
+                  progressTotalPages={progressTotalPages ?? null}
+                />
+              ) : (
+                <p className="text-sm text-ink-muted">Todavía no registraste progreso.</p>
+              )}
+            </div>
+          ) : null}
 
           {status === "read" ? (
             <>

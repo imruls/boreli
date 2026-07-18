@@ -1,5 +1,5 @@
 import type { createClient } from "@/lib/supabase/server";
-import type { Book, BookStatus, BookTag, UserBook } from "@/types/book";
+import type { Book, BookStatus, BookTag, ProgressType, UserBook } from "@/types/book";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -22,6 +22,9 @@ type UserBookRow = {
   tags: BookTag[] | null;
   rating: number | null;
   note: string | null;
+  progress_type: ProgressType | null;
+  progress_current: number | null;
+  progress_total_pages: number | null;
   started_at: string | null;
   finished_at: string | null;
   created_at: string;
@@ -29,7 +32,8 @@ type UserBookRow = {
 };
 
 const USER_BOOK_SELECT =
-  "id, user_id, book_id, status, tags, rating, note, started_at, finished_at, created_at, " +
+  "id, user_id, book_id, status, tags, rating, note, progress_type, progress_current, " +
+  "progress_total_pages, started_at, finished_at, created_at, " +
   "book:books(id, google_books_id, title, authors, cover_url, page_count, description, published_date)";
 
 function mapBook(row: BookRow | null, fallbackBookId: string): Book {
@@ -67,6 +71,9 @@ function mapUserBook(row: UserBookRow): UserBook {
     tags: row.tags ?? [],
     rating: row.rating,
     note: row.note,
+    progressType: row.progress_type,
+    progressCurrent: row.progress_current,
+    progressTotalPages: row.progress_total_pages,
     startedAt: row.started_at,
     finishedAt: row.finished_at,
     createdAt: row.created_at,

@@ -32,6 +32,9 @@ create table user_books (
   tags book_tag[] default '{}',
   rating smallint check (rating between 1 and 5),
   note text,
+  progress_type text check (progress_type in ('percent', 'pages')),
+  progress_current integer,
+  progress_total_pages integer,
   started_at timestamptz,
   finished_at timestamptz,
   created_at timestamptz default now(),
@@ -41,7 +44,25 @@ create table user_books (
   -- la reseña es opcional y de hasta 300 caracteres, y (mismo criterio que el
   -- rating) solo puede existir si el libro ya está marcado como leído
   constraint note_length check (note is null or char_length(note) <= 300),
-  constraint note_requires_read check (note is null or status = 'read')
+  constraint note_requires_read check (note is null or status = 'read'),
+  -- el progreso solo puede existir mientras el libro está "leyendo" (mismo
+  -- criterio que rating/note con 'read')
+  constraint progress_requires_reading check (
+    (progress_type is null and progress_current is null and progress_total_pages is null)
+    or status = 'reading'
+  ),
+  -- 'percent' guarda 0-100 en progress_current; 'pages' guarda la página
+  -- actual contra un total propio del progreso (progress_total_pages)
+  constraint progress_bounds check (
+    progress_type is null
+    or (progress_type = 'percent' and progress_current between 0 and 100)
+    or (
+      progress_type = 'pages'
+      and progress_total_pages is not null
+      and progress_total_pages > 0
+      and progress_current between 0 and progress_total_pages
+    )
+  )
 );
 
 -- RLS: cada usuario solo puede ver/editar sus propios registros
@@ -88,12 +109,28 @@ mismo criterio que `rating` — solo puede tener valor si el libro está en `sta
 Aplica la misma regla que con el rating: al mover un libro **fuera** de `read`, hay que limpiar
 `note` (`= null`) en la misma operación que cambia el `status`, o el update falla por el constraint.
 
+### Nota sobre el progreso de lectura (`progress_type` / `progress_current` / `progress_total_pages`)
+El progreso es opcional y de elección libre por libro entre dos modos (`progress_type`),
+independiente de los `tags` de formato — un libro físico puede seguirse por porcentaje igual que uno
+digital, y viceversa:
+- `'percent'`: `progress_current` guarda un valor entre 0 y 100.
+- `'pages'`: `progress_current` guarda la página actual, contra un total en `progress_total_pages`.
+  Este total es **propio del progreso**, no el `page_count` del catálogo (`books`): si el usuario
+  ingresa un total distinto a mano (ej. porque `page_count` no está cargado), no se pisa el dato
+  compartido del libro.
+
+Mismo criterio que `rating`/`note`: el progreso solo puede existir mientras `status = 'reading'`
+(`progress_requires_reading`), y al mover un libro **fuera** de `reading` hay que limpiar los 3
+campos (`= null`) en la misma operación que cambia el `status`, o el update falla por el constraint.
+`progress_bounds` valida los rangos según el modo elegido.
+
 ## Tipos TypeScript compartidos
 
 ```ts
 // types/book.ts
 export type BookStatus = 'want_to_read' | 'reading' | 'read';
 export type BookTag = 'physical' | 'google_books' | 'apple_books' | 'kindle' | 'pdf';
+export type ProgressType = 'percent' | 'pages';
 
 export interface Book {
   id: string;
@@ -114,6 +151,9 @@ export interface UserBook {
   tags: BookTag[];
   rating: number | null; // 1-5, solo aplica si status === 'read'
   note: string | null; // reseña libre, máx 300 caracteres, solo aplica si status === 'read'
+  progressType: ProgressType | null; // solo aplica si status === 'reading'
+  progressCurrent: number | null; // 0-100 si progressType === 'percent', página actual si === 'pages'
+  progressTotalPages: number | null; // solo aplica si progressType === 'pages'
   startedAt: string | null;
   finishedAt: string | null;
   book: Book; // resultado de join con la tabla books

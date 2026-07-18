@@ -139,6 +139,17 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
       edición. Esto reemplazó a `components/books/book-edit-menu-button.tsx` por
       `components/books/user-book-card.tsx`, que ahora administra ambos sheets (detalle + edición)
       desde un solo componente por card.
+- [x] Progreso de lectura para libros "Leyendo" (`progress_type`/`progress_current`/`progress_total_pages`
+      en `user_books`, opcional, solo aplica si `status = 'reading'` — constraints
+      `progress_requires_reading` y `progress_bounds` en `data-model.md`, mismo criterio que
+      rating/nota con "leído"). Esto revierte la decisión previa de "sin progreso de lectura" (ver
+      `CLAUDE.md`). El modo (porcentaje o página) es de elección libre por libro, sin atarlo al tag
+      de formato (`components/books/progress-input.tsx`); en modo página, el total es propio del
+      progreso y no pisa el `pageCount` del libro. Se edita junto al resto en `EditBookSheet`, se
+      muestra de solo lectura en `BookDetailSheet` (`components/books/progress-bar.tsx`), y además
+      tiene un acceso rápido desde la card de "Leyendo actualmente" en home
+      (`components/books/update-progress-sheet.tsx`) para no tener que abrir el sheet completo cada
+      vez que se quiere anotar el avance.
 
 ---
 

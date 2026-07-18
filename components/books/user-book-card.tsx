@@ -5,8 +5,12 @@ import { MoreVertical } from "lucide-react";
 import { BookCard } from "@/components/books/book-card";
 import { BookDetailSheet } from "@/components/books/book-detail-sheet";
 import { EditBookSheet } from "@/components/books/edit-book-sheet";
+import { UpdateProgressSheet } from "@/components/books/update-progress-sheet";
 import { BookTagBadge } from "@/components/books/book-tag-badge";
 import { RatingStars } from "@/components/books/rating-stars";
+import { ProgressBar } from "@/components/books/progress-bar";
+import type { ProgressValue } from "@/components/books/progress-input";
+import { hasProgress } from "@/lib/book-progress";
 import { updateUserBook, deleteUserBook } from "@/app/(dashboard)/actions";
 import type { BookStatus, BookTag, UserBook } from "@/types/book";
 
@@ -27,15 +31,32 @@ export function UserBookCard({
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [progressOpen, setProgressOpen] = useState(false);
   const [isSaving, startSaving] = useTransition();
   const [isDeleting, startDeleting] = useTransition();
+  const [isSavingProgress, startSavingProgress] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [progressError, setProgressError] = useState<string | null>(null);
 
-  function handleSave(status: BookStatus, tags: BookTag[], rating?: number, note?: string) {
+  function handleSave(
+    status: BookStatus,
+    tags: BookTag[],
+    rating?: number,
+    note?: string,
+    progress?: ProgressValue,
+  ) {
     setError(null);
     startSaving(async () => {
       try {
-        await updateUserBook(userBook.id, { status, tags, rating, note });
+        await updateUserBook(userBook.id, {
+          status,
+          tags,
+          rating,
+          note,
+          progressType: progress?.progressType ?? undefined,
+          progressCurrent: progress?.progressCurrent ?? undefined,
+          progressTotalPages: progress?.progressTotalPages ?? undefined,
+        });
         setEditOpen(false);
       } catch {
         setError("No pudimos actualizar el libro. Probá de nuevo.");
@@ -51,6 +72,29 @@ export function UserBookCard({
         setEditOpen(false);
       } catch {
         setError("No pudimos eliminar el libro. Probá de nuevo.");
+      }
+    });
+  }
+
+  // Acceso rápido de la card (sin abrir `EditBookSheet` completo): reusa la
+  // misma acción que la edición completa, sin tocar status/tags/rating/note,
+  // para no duplicar la lógica sensible al constraint `progress_bounds`.
+  function handleSaveProgress(progress: ProgressValue) {
+    setProgressError(null);
+    startSavingProgress(async () => {
+      try {
+        await updateUserBook(userBook.id, {
+          status: userBook.status,
+          tags: userBook.tags,
+          rating: userBook.rating ?? undefined,
+          note: userBook.note ?? undefined,
+          progressType: progress.progressType ?? undefined,
+          progressCurrent: progress.progressCurrent ?? undefined,
+          progressTotalPages: progress.progressTotalPages ?? undefined,
+        });
+        setProgressOpen(false);
+      } catch {
+        setProgressError("No pudimos actualizar el progreso. Probá de nuevo.");
       }
     });
   }
@@ -71,6 +115,29 @@ export function UserBookCard({
               {userBook.tags.map((tag) => (
                 <BookTagBadge key={tag} tag={tag} />
               ))}
+            </div>
+          ) : undefined
+        }
+        footer={
+          userBook.status === "reading" ? (
+            <div className="flex flex-col gap-1">
+              {hasProgress(userBook) ? (
+                <ProgressBar
+                  progressType={userBook.progressType}
+                  progressCurrent={userBook.progressCurrent}
+                  progressTotalPages={userBook.progressTotalPages}
+                />
+              ) : null}
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setProgressOpen(true);
+                }}
+                className="self-start text-xs font-semibold text-ink-muted underline-offset-2 hover:underline"
+              >
+                {hasProgress(userBook) ? "Actualizar progreso" : "Agregar progreso"}
+              </button>
             </div>
           ) : undefined
         }
@@ -97,6 +164,9 @@ export function UserBookCard({
         tags={userBook.tags}
         rating={userBook.rating}
         note={userBook.note}
+        progressType={userBook.progressType}
+        progressCurrent={userBook.progressCurrent}
+        progressTotalPages={userBook.progressTotalPages}
         onEdit={() => {
           setDetailOpen(false);
           setEditOpen(true);
@@ -110,15 +180,37 @@ export function UserBookCard({
           if (!next) setError(null);
         }}
         bookTitle={userBook.book.title}
+        bookPageCount={userBook.book.pageCount}
         currentStatus={userBook.status}
         currentTags={userBook.tags}
         currentRating={userBook.rating}
         currentNote={userBook.note}
+        currentProgressType={userBook.progressType}
+        currentProgressCurrent={userBook.progressCurrent}
+        currentProgressTotalPages={userBook.progressTotalPages}
         onSave={handleSave}
         onDelete={handleDelete}
         isSaving={isSaving}
         isDeleting={isDeleting}
         error={error}
+      />
+
+      <UpdateProgressSheet
+        open={progressOpen}
+        onOpenChange={(next) => {
+          setProgressOpen(next);
+          if (!next) setProgressError(null);
+        }}
+        bookTitle={userBook.book.title}
+        bookPageCount={userBook.book.pageCount}
+        currentProgress={{
+          progressType: userBook.progressType,
+          progressCurrent: userBook.progressCurrent,
+          progressTotalPages: userBook.progressTotalPages,
+        }}
+        onSave={handleSaveProgress}
+        isSaving={isSavingProgress}
+        error={progressError}
       />
     </>
   );

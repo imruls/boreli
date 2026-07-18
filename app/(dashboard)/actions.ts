@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getAllUserBooks } from "@/lib/queries/user-books";
 import { buildLibraryCsv, buildLibraryCsvFilename } from "@/lib/csv-export";
 import { NOTE_MAX_LENGTH } from "@/lib/book-note";
-import type { BookStatus, BookTag } from "@/types/book";
+import { PROGRESS_PERCENT_MAX, PROGRESS_PERCENT_MIN } from "@/lib/book-progress";
+import type { BookStatus, BookTag, ProgressType } from "@/types/book";
 
 export async function logout() {
   const supabase = await createClient();
@@ -29,14 +30,42 @@ export async function logout() {
 // fechas en ese caso.
 export async function updateUserBook(
   userBookId: string,
-  input: { status: BookStatus; tags: BookTag[]; rating?: number; note?: string },
+  input: {
+    status: BookStatus;
+    tags: BookTag[];
+    rating?: number;
+    note?: string;
+    progressType?: ProgressType;
+    progressCurrent?: number;
+    progressTotalPages?: number;
+  },
 ) {
-  const { status, tags, rating, note } = input;
+  const { status, tags, rating, note, progressType, progressCurrent, progressTotalPages } = input;
   if (status === "read" && (!rating || rating < 1 || rating > 5)) {
     throw new Error("El rating (1-5) es obligatorio para marcar un libro como leído");
   }
   if (note && note.length > NOTE_MAX_LENGTH) {
     throw new Error(`La reseña no puede superar los ${NOTE_MAX_LENGTH} caracteres`);
+  }
+  // El progreso es opcional y solo aplica mientras el libro está "leyendo"
+  // (mismo criterio que rating/note con "leído") — se valida acá antes del
+  // update para no depender únicamente del constraint `progress_bounds`.
+  if (status === "reading" && progressType) {
+    if (progressCurrent === undefined) {
+      throw new Error("Falta el valor de progreso");
+    }
+    if (progressType === "percent") {
+      if (progressCurrent < PROGRESS_PERCENT_MIN || progressCurrent > PROGRESS_PERCENT_MAX) {
+        throw new Error("El porcentaje de progreso debe estar entre 0 y 100");
+      }
+    } else if (progressType === "pages") {
+      if (!progressTotalPages || progressTotalPages <= 0) {
+        throw new Error("El total de páginas debe ser mayor a 0");
+      }
+      if (progressCurrent < 0 || progressCurrent > progressTotalPages) {
+        throw new Error("La página actual no puede ser mayor al total de páginas");
+      }
+    }
   }
 
   const supabase = await createClient();
@@ -58,6 +87,9 @@ export async function updateUserBook(
     tags: BookTag[];
     rating: number | null;
     note: string | null;
+    progress_type: ProgressType | null;
+    progress_current: number | null;
+    progress_total_pages: number | null;
     started_at?: string;
     finished_at?: string;
   } = {
@@ -66,6 +98,12 @@ export async function updateUserBook(
     // Fuera de "leído" no puede quedar rating ni reseña (constraints de la DB).
     rating: status === "read" ? (rating as number) : null,
     note: status === "read" ? (note?.trim() || null) : null,
+    // Fuera de "leyendo" no puede quedar progreso (constraint
+    // `progress_requires_reading`, mismo criterio que rating/note).
+    progress_type: status === "reading" && progressType ? progressType : null,
+    progress_current: status === "reading" && progressType ? (progressCurrent as number) : null,
+    progress_total_pages:
+      status === "reading" && progressType === "pages" ? (progressTotalPages as number) : null,
   };
   if (status === "reading" && current.status !== "reading") {
     update.started_at = new Date().toISOString();
