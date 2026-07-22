@@ -19,7 +19,7 @@
 | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Key pública, segura para el cliente (protegida por RLS) |
 | `GOOGLE_BOOKS_API_KEY` | Key para búsquedas contra Google Books API |
-| `SUPABASE_SERVICE_ROLE_KEY` | Key privada (Settings → API → `service_role` secret). Bypassa RLS y habilita `auth.admin.*` — **solo** se usa server-side en `lib/supabase/admin.ts`, nunca en código de cliente. Necesaria para el reset de contraseña sin email (ver más abajo) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Key privada (Settings → API → `service_role` secret). Bypassa RLS y habilita `auth.admin.*` — **solo** server-side vía `lib/supabase/admin.ts` (nunca en cliente). Usos: reset de contraseña, CRUD de `user_security_answers`, borrado de cuenta, y RPCs de rate limit (login/signup/reset/búsqueda) |
 
 Configurarlas en `.env.local` en desarrollo y como env vars del proyecto en Vercel para producción.
 
@@ -31,20 +31,28 @@ fija para todos los usuarios**:
 
 - `lib/security-question.ts`: la pregunta (constante, sin dependencias de Node) — importable desde
   componentes de cliente para mostrarla en los formularios.
-- `lib/security-answer.ts`: hash/verify de la respuesta (SHA-256 + salt fijo, `node:crypto`) — **server-only**,
-  no importar desde `"use client"`.
-- Al crear la cuenta (`app/(auth)/signup/actions.ts`) se guarda `security_answer_hash` en el
-  `user_metadata` del usuario.
+- `lib/security-answer.ts`: hash/verify versionado de la respuesta (`scrypt` + salt aleatorio y
+  comparación constant-time, `node:crypto`) — **server-only**, no importar desde `"use client"`.
+  Los hashes legacy SHA-256 se aceptan una vez y se migran automáticamente tras una verificación
+  correcta. Incluye trabajo dummy de scrypt para enmascarar timing cuando no hay hash.
+- El hash **no** vive en `user_metadata` (iría en el JWT). Se guarda en la tabla privada
+  `user_security_answers` (solo `service_role`); la UI autenticada consulta el booleano
+  `has_security_answer()` sin ver el hash.
+- Al crear la cuenta (`app/(auth)/signup/actions.ts`) se inserta el hash con Service Role tras el
+  `signUp`.
 - `app/(auth)/forgot-password/`: formulario de un solo paso (email + respuesta + nueva contraseña).
-  La action usa `lib/supabase/admin.ts` (Service Role Key) para buscar el usuario por email
-  (`auth.admin.listUsers()`, paginado — no hay filtro por email nativo) y, si la respuesta coincide,
-  cambia la contraseña con `auth.admin.updateUserById()`. Mismo mensaje de error genérico para
-  "usuario no encontrado" y "respuesta incorrecta", para no filtrar si un email existe.
-- `/perfil/seguridad`: pantalla para que un usuario ya logueado defina/actualice su respuesta (usa el
-  cliente normal autenticado, no la Service Role Key) — necesaria para cuentas creadas antes de este
-  cambio, que no tienen `security_answer_hash` todavía.
-- `lib/supabase/middleware.ts`: `/forgot-password` está en `AUTH_PATHS` (no requiere sesión, y
-  redirige a `/` si ya hay una).
+  La action usa `lib/supabase/admin.ts` para rate limit por IP, lookup vía RPC, y
+  `auth.admin.updateUserById()`. El rate limit por cuenta solo se cobra tras un **fallo** de
+  verificación (un acierto correcto no queda bloqueado por DoS de intentos fallidos). El mensaje
+  externo es siempre genérico.
+- `/perfil/seguridad`: define/actualiza la respuesta exigiendo la **contraseña actual**; escribe el
+  hash con Service Role.
+- Login y signup también aplican rate limits por IP (y por cuenta en fallos de login).
+- `lib/supabase/middleware.ts` (invocado desde `proxy.ts`): `/forgot-password` está en `AUTH_PATHS`.
+
+La pregunta fija sigue siendo un compromiso del MVP: rate limiting y `scrypt` reducen fuerza bruta
+online, pero no reemplazan un segundo factor ni un reset por email. Si la app deja de
+ser de uso personal/cerrado, este flujo debe migrarse al mecanismo estándar de Supabase Auth.
 
 ## Estructura de carpetas
 

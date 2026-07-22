@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { isHttpUrl } from "@/lib/utils";
+import {
+  BOOK_AUTHOR_MAX_LENGTH,
+  BOOK_COVER_URL_MAX_LENGTH,
+  BOOK_PAGE_COUNT_MAX,
+  BOOK_TITLE_MAX_LENGTH,
+} from "@/lib/book-validation";
 import type { Book } from "@/types/book";
 
 // Carga manual para cuando la búsqueda en Google Books no encuentra el
@@ -90,6 +96,7 @@ export function ManualBookForm({
               id="manual-title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
+              maxLength={BOOK_TITLE_MAX_LENGTH}
               placeholder="Título del libro"
             />
           </div>
@@ -100,6 +107,7 @@ export function ManualBookForm({
               id="manual-authors"
               value={authors}
               onChange={(event) => setAuthors(event.target.value)}
+              maxLength={BOOK_AUTHOR_MAX_LENGTH}
               placeholder="Separá con coma si son varios"
             />
           </div>
@@ -111,6 +119,7 @@ export function ManualBookForm({
               type="url"
               value={coverUrl}
               onChange={(event) => setCoverUrl(event.target.value)}
+              maxLength={BOOK_COVER_URL_MAX_LENGTH}
               placeholder="https://…"
             />
           </div>
@@ -121,6 +130,7 @@ export function ManualBookForm({
               id="manual-pages"
               type="number"
               min={1}
+              max={BOOK_PAGE_COUNT_MAX}
               inputMode="numeric"
               value={pageCount}
               onChange={(event) => setPageCount(event.target.value)}

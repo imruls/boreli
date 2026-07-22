@@ -16,8 +16,8 @@ const AVATAR_BUCKET = "avatars";
 // Actualiza `display_name` y, si el usuario elige una foto nueva, sube el
 // archivo al bucket `avatars` (path `{user_id}/avatar`, sin extensión —
 // Storage sirve el content-type real igual) y guarda su URL pública. Ambos
-// campos viven en `user_metadata`, mismo criterio que
-// `security_answer_hash` (ver data-model.md) — no hay tabla `profiles`.
+// campos viven en `user_metadata` (ver data-model.md) — no hay tabla
+// `profiles`. La respuesta de seguridad va en `user_security_answers`, no acá.
 export async function updateProfile(
   _prevState: ProfileState,
   formData: FormData,

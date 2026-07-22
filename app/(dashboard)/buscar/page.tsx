@@ -51,24 +51,31 @@ export default function BuscarPage() {
     }
 
     const requestId = ++latestRequestRef.current;
+    const controller = new AbortController();
 
     const timeoutId = setTimeout(async () => {
       setSearchStatus("loading");
       try {
-        const response = await fetch(`/api/books/search?q=${encodeURIComponent(trimmed)}`);
+        const response = await fetch(`/api/books/search?q=${encodeURIComponent(trimmed)}`, {
+          signal: controller.signal,
+        });
         if (!response.ok) throw new Error("Search request failed");
         const data = (await response.json()) as { books: Book[] };
         if (latestRequestRef.current !== requestId) return;
         setResults(data.books);
         setSearchStatus("idle");
       } catch {
+        if (controller.signal.aborted) return;
         if (latestRequestRef.current !== requestId) return;
         setResults([]);
         setSearchStatus("error");
       }
     }, DEBOUNCE_MS);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [query, retryToken]);
 
   useEffect(() => {

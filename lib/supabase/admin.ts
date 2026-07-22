@@ -1,9 +1,11 @@
-import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-// Cliente con la Service Role Key: bypassa RLS y habilita `auth.admin.*`
-// (listar/actualizar usuarios sin su sesión). Se usa exclusivamente en Server
-// Actions para el flujo de "olvidé mi contraseña" sin email — nunca se
-// importa desde código de cliente ("use client").
+// Cliente con la Service Role Key: bypassa RLS y habilita `auth.admin.*`.
+// Usos server-only (nunca desde "use client"):
+// - reset de contraseña sin email (`forgot-password`)
+// - lectura/escritura de `user_security_answers`
+// - borrado de cuenta (`auth.admin.deleteUser`)
+// - RPCs de rate limit (`consume_security_rate_limit`) desde search/login/reset
 export function createAdminClient(): SupabaseClient {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
@@ -17,26 +19,64 @@ export function createAdminClient(): SupabaseClient {
   });
 }
 
-// No hay filtro por email en `auth.admin.listUsers()`, así que se pagina a
-// mano buscando la coincidencia. Alcanza de sobra para la escala de esta app
-// (uso personal / pocos usuarios) — se corta en 10 páginas de 200 como tope
-// de seguridad para no loopear indefinidamente.
+export type PasswordRecoveryUser = {
+  id: string;
+  securityAnswerHash: string | null;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// La RPC es SECURITY DEFINER y solo tiene EXECUTE para service_role. Evita
+// listar todos los usuarios de Auth y solo expone id + hash de la tabla
+// privada `user_security_answers` (nunca metadata completa).
 export async function findUserByEmail(
   admin: SupabaseClient,
   email: string,
-): Promise<User | null> {
-  const normalized = email.trim().toLowerCase();
-  const perPage = 200;
+): Promise<PasswordRecoveryUser | null> {
+  const { data, error } = await admin.rpc("find_password_recovery_user", {
+    p_email: email.trim().toLowerCase(),
+  });
+  if (error) throw error;
 
-  for (let page = 1; page <= 10; page++) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
-    if (error) throw error;
-
-    const found = data.users.find((user) => user.email?.toLowerCase() === normalized);
-    if (found) return found;
-
-    if (data.users.length < perPage) break;
+  const row = Array.isArray(data) ? data[0] : null;
+  if (!isRecord(row) || typeof row.user_id !== "string") {
+    return null;
   }
 
-  return null;
+  return {
+    id: row.user_id,
+    securityAnswerHash:
+      typeof row.security_answer_hash === "string" ? row.security_answer_hash : null,
+  };
+}
+
+export async function getSecurityAnswerHash(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<string | null> {
+  const { data, error } = await admin
+    .from("user_security_answers")
+    .select("answer_hash")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return typeof data?.answer_hash === "string" ? data.answer_hash : null;
+}
+
+export async function upsertSecurityAnswerHash(
+  admin: SupabaseClient,
+  userId: string,
+  answerHash: string,
+): Promise<void> {
+  const { error } = await admin.from("user_security_answers").upsert(
+    {
+      user_id: userId,
+      answer_hash: answerHash,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" },
+  );
+  if (error) throw error;
 }

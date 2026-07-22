@@ -1,0 +1,2 @@
+-- El MVP no requiere datos iniciales. Este archivo existe para que
+-- `supabase db reset` pueda ejecutar la configuración de seed sin fallar.

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { login, type AuthActionState } from "@/app/(auth)/login/actions";
+import { PASSWORD_MIN_LENGTH } from "@/lib/password-policy";
 
 const initialState: AuthActionState = { error: null };
 
@@ -31,7 +32,7 @@ export function LoginForm() {
           id="password"
           name="password"
           autoComplete="current-password"
-          minLength={6}
+          minLength={PASSWORD_MIN_LENGTH}
           required
         />
       </div>

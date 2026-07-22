@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronRight, Pencil, ShieldCheck, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/(dashboard)/actions";
+import { userHasSecurityAnswer } from "@/lib/security-answer-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/nav/page-header";
@@ -27,7 +28,7 @@ export default async function PerfilPage() {
   const avatarUrl =
     typeof user?.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null;
   const initial = (displayName ?? email).charAt(0).toUpperCase() || "?";
-  const hasSecurityAnswer = typeof user?.user_metadata?.security_answer_hash === "string";
+  const hasSecurityAnswer = await userHasSecurityAnswer(supabase);
 
   return (
     <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-8">

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { userHasSecurityAnswer } from "@/lib/security-answer-store";
 import { PageHeader } from "@/components/nav/page-header";
 import { SecurityAnswerForm } from "@/components/auth/security-answer-form";
 import { SECURITY_QUESTION } from "@/lib/security-question";
@@ -13,8 +14,9 @@ export default async function SeguridadPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (!user) return null;
 
-  const hasSecurityAnswer = typeof user?.user_metadata?.security_answer_hash === "string";
+  const hasSecurityAnswer = await userHasSecurityAnswer(supabase);
 
   return (
     <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-8">

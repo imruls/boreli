@@ -5,8 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getAllUserBooks } from "@/lib/queries/user-books";
 import { buildLibraryCsv, buildLibraryCsvFilename } from "@/lib/csv-export";
-import { NOTE_MAX_LENGTH } from "@/lib/book-note";
-import { PROGRESS_PERCENT_MAX, PROGRESS_PERCENT_MIN } from "@/lib/book-progress";
+import { parseUserBookId, parseUserBookInput } from "@/lib/book-validation";
 import type { BookStatus, BookTag, ProgressType } from "@/types/book";
 
 export async function logout() {
@@ -30,43 +29,11 @@ export async function logout() {
 // fechas en ese caso.
 export async function updateUserBook(
   userBookId: string,
-  input: {
-    status: BookStatus;
-    tags: BookTag[];
-    rating?: number;
-    note?: string;
-    progressType?: ProgressType;
-    progressCurrent?: number;
-    progressTotalPages?: number;
-  },
+  input: unknown,
 ) {
-  const { status, tags, rating, note, progressType, progressCurrent, progressTotalPages } = input;
-  if (status === "read" && (!rating || rating < 1 || rating > 5)) {
-    throw new Error("El rating (1-5) es obligatorio para marcar un libro como leído");
-  }
-  if (note && note.length > NOTE_MAX_LENGTH) {
-    throw new Error(`La reseña no puede superar los ${NOTE_MAX_LENGTH} caracteres`);
-  }
-  // El progreso es opcional y solo aplica mientras el libro está "leyendo"
-  // (mismo criterio que rating/note con "leído") — se valida acá antes del
-  // update para no depender únicamente del constraint `progress_bounds`.
-  if (status === "reading" && progressType) {
-    if (progressCurrent === undefined) {
-      throw new Error("Falta el valor de progreso");
-    }
-    if (progressType === "percent") {
-      if (progressCurrent < PROGRESS_PERCENT_MIN || progressCurrent > PROGRESS_PERCENT_MAX) {
-        throw new Error("El porcentaje de progreso debe estar entre 0 y 100");
-      }
-    } else if (progressType === "pages") {
-      if (!progressTotalPages || progressTotalPages <= 0) {
-        throw new Error("El total de páginas debe ser mayor a 0");
-      }
-      if (progressCurrent < 0 || progressCurrent > progressTotalPages) {
-        throw new Error("La página actual no puede ser mayor al total de páginas");
-      }
-    }
-  }
+  const parsedUserBookId = parseUserBookId(userBookId);
+  const { status, tags, rating, note, progressType, progressCurrent, progressTotalPages } =
+    parseUserBookInput(input);
 
   const supabase = await createClient();
   const {
@@ -77,7 +44,7 @@ export async function updateUserBook(
   const { data: current } = await supabase
     .from("user_books")
     .select("status")
-    .eq("id", userBookId)
+    .eq("id", parsedUserBookId)
     .eq("user_id", user.id)
     .single();
   if (!current) throw new Error("Libro no encontrado");
@@ -96,14 +63,14 @@ export async function updateUserBook(
     status,
     tags,
     // Fuera de "leído" no puede quedar rating ni reseña (constraints de la DB).
-    rating: status === "read" ? (rating as number) : null,
-    note: status === "read" ? (note?.trim() || null) : null,
+    rating: status === "read" ? (rating ?? null) : null,
+    note: status === "read" ? (note ?? null) : null,
     // Fuera de "leyendo" no puede quedar progreso (constraint
     // `progress_requires_reading`, mismo criterio que rating/note).
     progress_type: status === "reading" && progressType ? progressType : null,
-    progress_current: status === "reading" && progressType ? (progressCurrent as number) : null,
+    progress_current: status === "reading" && progressType ? (progressCurrent ?? null) : null,
     progress_total_pages:
-      status === "reading" && progressType === "pages" ? (progressTotalPages as number) : null,
+      status === "reading" && progressType === "pages" ? (progressTotalPages ?? null) : null,
   };
   if (status === "reading" && current.status !== "reading") {
     update.started_at = new Date().toISOString();
@@ -115,7 +82,7 @@ export async function updateUserBook(
   const { error } = await supabase
     .from("user_books")
     .update(update)
-    .eq("id", userBookId)
+    .eq("id", parsedUserBookId)
     .eq("user_id", user.id);
 
   if (error) throw error;
@@ -129,6 +96,7 @@ export async function updateUserBook(
 // restringe el delete a las filas del propio usuario; el `.eq("user_id", …)`
 // es defensa en profundidad, no la única barrera.
 export async function deleteUserBook(userBookId: string) {
+  const parsedUserBookId = parseUserBookId(userBookId);
   const supabase = await createClient();
   const {
     data: { user },
@@ -138,7 +106,7 @@ export async function deleteUserBook(userBookId: string) {
   const { error } = await supabase
     .from("user_books")
     .delete()
-    .eq("id", userBookId)
+    .eq("id", parsedUserBookId)
     .eq("user_id", user.id);
 
   if (error) throw error;

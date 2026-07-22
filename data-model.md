@@ -20,7 +20,25 @@ create table books (
   page_count integer,
   description text,
   published_date text,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  constraint books_title_bounds check (char_length(btrim(title)) between 1 and 500),
+  constraint books_google_id_bounds check (
+    google_books_id is null or char_length(google_books_id) <= 200
+  ),
+  constraint books_authors_bounds check (authors is null or cardinality(authors) <= 20),
+  constraint books_cover_url_bounds check (
+    cover_url is null
+    or (char_length(cover_url) <= 2048 and cover_url ~* '^https?://')
+  ),
+  constraint books_page_count_bounds check (
+    page_count is null or page_count between 1 and 100000
+  ),
+  constraint books_description_bounds check (
+    description is null or char_length(description) <= 50000
+  ),
+  constraint books_published_date_bounds check (
+    published_date is null or char_length(published_date) <= 50
+  )
 );
 
 -- La relación usuario-libro: acá vive el estado, tags y rating
@@ -90,6 +108,24 @@ grant insert on public.books to authenticated;
 
 grant select, insert, update, delete on public.user_books to authenticated;
 ```
+
+### Controles server-only
+
+`supabase/migrations/20260722010000_security_hardening.sql` agrega
+`security_rate_limits` y dos RPCs que solo puede ejecutar `service_role`:
+
+- `consume_security_rate_limit(...)`: consume intentos de forma atómica por una key hasheada.
+- `find_password_recovery_user(email)`: consulta `auth.users` sin listar todo Auth.
+
+La tabla tiene RLS habilitado, no posee policies para `anon`/`authenticated` y revoca sus grants
+explícitamente. Ningún identificador en claro se persiste en ella.
+
+`supabase/migrations/20260722020000_security_answers_private.sql` agrega
+`user_security_answers` (hash de la respuesta de seguridad) con el mismo modelo de privilegios
+(solo `service_role`), migra/limpia hashes legacy fuera de `user_metadata`, actualiza
+`find_password_recovery_user` para devolver únicamente `user_id` + `security_answer_hash`, y
+expone `has_security_answer()` a `authenticated` como booleano (nunca el hash). El hash **no**
+debe guardarse en `user_metadata` porque Supabase lo incluye en el JWT.
 
 ### Nota sobre el constraint de rating
 `rating_requires_read` bloquea a nivel de base de datos que se guarde un rating en un libro que no
@@ -208,14 +244,16 @@ alter table user_books
 A diferencia de los libros (que tienen su propia tabla), el nombre de usuario y la foto de perfil
 son datos de la cuenta, no del dominio de libros — y la app no tiene funciones sociales que
 necesiten consultarlos por otro lado (join, búsqueda, unicidad). Por eso, **no viven en una tabla
-`profiles` nueva**: siguen el mismo criterio que `security_answer_hash` (`lib/security-answer.ts`)
-y se guardan directo en `user_metadata` de Supabase Auth, actualizados con
+`profiles` nueva**: se guardan directo en `user_metadata` de Supabase Auth, actualizados con
 `supabase.auth.updateUser({ data: {...} })`:
 
 - `display_name`: string, opcional, hasta 40 caracteres. Si no está seteado, la UI cae al email
   (mismo fallback que ya existía).
 - `avatar_url`: string (URL pública), opcional. Apunta a un archivo en el bucket `avatars` de
   Supabase Storage.
+
+La **respuesta de seguridad** es un secreto de autenticación y **no** va en `user_metadata`
+(quedaría en el JWT). Vive en `user_security_answers` (ver controles server-only más arriba).
 
 ### Bucket `avatars`
 
@@ -243,9 +281,11 @@ vez de acumular archivos huérfanos.
 
 ## Supabase CLI y migraciones versionadas
 
-A partir de la migración de `note`, el repo usa el [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)
-(`supabase` como devDependency, ver `package.json`) en vez de correr SQL a mano — así los cambios de
-esquema quedan versionados en `supabase/migrations/` junto con el resto del código.
+El esquema base quedó versionado retroactivamente en la migración idempotente
+`20260701000000_initial_schema.sql`, anterior a los deltas de `note`, `avatars` y `progress`. Por
+eso una DB vacía puede reconstruirse con Supabase CLI y una DB remota creada con el setup manual
+puede registrar el baseline sin recrear objetos. `pnpm db:push` usa `--include-all` para incluir
+esta migración anterior al último timestamp remoto.
 
 Flujo para una migración nueva:
 

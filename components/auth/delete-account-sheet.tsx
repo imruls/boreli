@@ -59,7 +59,14 @@ export function DeleteAccountSheet({ hasSecurityAnswer }: { hasSecurityAnswer: b
           <form action={formAction} className="flex flex-col gap-4 px-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="securityAnswer">{SECURITY_QUESTION}</Label>
-              <Input id="securityAnswer" name="securityAnswer" type="text" autoComplete="off" required />
+              <Input
+                id="securityAnswer"
+                name="securityAnswer"
+                type="text"
+                autoComplete="off"
+                maxLength={200}
+                required
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="password">Tu contraseña</Label>

@@ -21,7 +21,7 @@ export async function createClient() {
             );
           } catch {
             // Se puede ignorar si se llama desde un Server Component: el
-            // middleware de sesión (próximo paso, junto con login/signup)
+            // proxy de sesión (`proxy.ts` → `lib/supabase/middleware.ts`)
             // es el que se encarga de refrescar las cookies.
           }
         },

@@ -10,6 +10,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { signup } from "@/app/(auth)/signup/actions";
 import type { AuthActionState } from "@/app/(auth)/login/actions";
 import { SECURITY_QUESTION } from "@/lib/security-question";
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/lib/password-policy";
 
 const initialState: AuthActionState = { error: null };
 
@@ -24,15 +25,29 @@ export function SignupForm() {
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="password">Contraseña</Label>
-        <PasswordInput id="password" name="password" autoComplete="new-password" minLength={6} required />
-        <p className="text-xs text-ink-muted">Mínimo 6 caracteres.</p>
+        <PasswordInput
+          id="password"
+          name="password"
+          autoComplete="new-password"
+          minLength={PASSWORD_MIN_LENGTH}
+          maxLength={PASSWORD_MAX_LENGTH}
+          required
+        />
+        <p className="text-xs text-ink-muted">Mínimo {PASSWORD_MIN_LENGTH} caracteres.</p>
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="securityAnswer">Pregunta de seguridad</Label>
         <p className="text-xs text-ink-muted">
           La vas a necesitar si alguna vez olvidás tu contraseña: {SECURITY_QUESTION}
         </p>
-        <Input id="securityAnswer" name="securityAnswer" type="text" autoComplete="off" required />
+        <Input
+          id="securityAnswer"
+          name="securityAnswer"
+          type="text"
+          autoComplete="off"
+          maxLength={200}
+          required
+        />
       </div>
       {state.error ? (
         <div className="flex items-start gap-2 rounded-lg border border-ink-border bg-ink-border/30 px-3 py-2.5 text-sm text-ink">

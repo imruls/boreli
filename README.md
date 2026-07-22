@@ -48,10 +48,17 @@ Abrir [http://localhost:3000](http://localhost:3000) en el navegador.
 | `pnpm dev` | Servidor de desarrollo |
 | `pnpm build` | Build de producción |
 | `pnpm lint` | Lint |
-| `pnpm tsc --noEmit` | Type check |
+| `pnpm typecheck` | Type check |
+| `pnpm test` | Tests unitarios y de regresión |
 | `pnpm exec supabase migration new <nombre>` | Crea una migración de DB nueva |
 | `pnpm db:login` / `pnpm db:link` | Autenticación y link con el proyecto de Supabase (una vez por máquina) |
 | `pnpm db:push` | Aplica las migraciones pendientes al proyecto de Supabase linkeado |
+| `pnpm db:reset` | Reconstruye la DB local desde migraciones + seed |
+
+> Al desplegar una versión que incluya migraciones, aplicar `pnpm db:push`
+> antes que el código de aplicación. El reset de contraseña, la tabla
+> `user_security_answers` y los rate limits dependen de las RPCs/tablas
+> versionadas en `supabase/migrations/`.
 
 ## Documentación del proyecto
 

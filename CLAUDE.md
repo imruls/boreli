@@ -42,9 +42,12 @@ Ver `tech-stack.md` para el detalle de cada decisión.
 - La app NO es PWA ni instalable — 100% navegador con URL + login.
 - Sin funciones sociales — cada usuario ve solo su propia data (RLS en Supabase).
 - Auth del MVP es login/signup básico (email + password) — la verificación de email queda para post-MVP.
-- Recuperación de contraseña: implementada **sin servicio de email**, con pregunta de seguridad fija para todos los usuarios (`lib/security-question.ts`). La respuesta se guarda hasheada en `user_metadata` (`lib/security-answer.ts`) y el reset (`app/(auth)/forgot-password/`) usa la Service Role Key de Supabase (`lib/supabase/admin.ts`, variable `SUPABASE_SERVICE_ROLE_KEY`) para cambiar la contraseña sin el flujo de magic link por mail. Cuentas creadas antes de este cambio configuran su respuesta desde `/perfil/seguridad`.
+- Recuperación de contraseña: implementada **sin servicio de email**, con pregunta de seguridad fija para todos los usuarios (`lib/security-question.ts`). La respuesta se guarda hasheada en la tabla privada `user_security_answers` (solo `service_role`; nunca en `user_metadata`/JWT — ver `data-model.md`) y el reset (`app/(auth)/forgot-password/`) usa la Service Role Key de Supabase (`lib/supabase/admin.ts`, variable `SUPABASE_SERVICE_ROLE_KEY`) para cambiar la contraseña sin el flujo de magic link por mail. Cuentas creadas antes de este cambio configuran su respuesta desde `/perfil/seguridad`.
+  El hash actual usa `scrypt` con salt aleatorio (los hashes SHA-256 legacy se migran al verificarse)
+  y el reset/login/signup están limitados por cuenta e IP mediante RPCs de Postgres exclusivas de `service_role`;
+  esas migraciones deben aplicarse antes de desplegar el código.
 - La carga manual de libros (cuando no aparecen en la búsqueda de Google Books) pide: título, autor, portada (URL) y cantidad de páginas. No pide descripción ni fecha de publicación.
-- Nombre de usuario (`display_name`) y foto de perfil (`avatar_url`) se editan desde `/perfil/editar` (`app/(dashboard)/perfil/editar/`) y viven en `user_metadata` de Supabase Auth — mismo criterio que `security_answer_hash`, sin tabla `profiles` nueva, porque no hay funciones sociales que necesiten consultarlos por otro lado. La foto se sube al bucket público `avatars` de Supabase Storage, con la convención de path `{user_id}/avatar` (ver `data-model.md`).
+- Nombre de usuario (`display_name`) y foto de perfil (`avatar_url`) se editan desde `/perfil/editar` (`app/(dashboard)/perfil/editar/`) y viven en `user_metadata` de Supabase Auth — sin tabla `profiles` nueva, porque no hay funciones sociales que necesiten consultarlos por otro lado. La foto se sube al bucket público `avatars` de Supabase Storage, con la convención de path `{user_id}/avatar` (ver `data-model.md`). La respuesta de seguridad **no** vive en `user_metadata`.
 
 ## Fuera de alcance del MVP
 - Red social, seguir a otros usuarios, feed público
