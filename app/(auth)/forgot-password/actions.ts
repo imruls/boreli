@@ -95,7 +95,17 @@ export async function resetPassword(
       return { error: GENERIC_ERROR, success: false };
     }
 
-    const verification = await verifySecurityAnswer(securityAnswer, user.securityAnswerHash);
+    // A diferencia de login/signup/seguridad, acá NO se chequea el bucket de
+    // cuenta antes de verificar (con isSecurityRateLimitBlocked): si lo
+    // hiciéramos, un atacante que solo conoce el email de la víctima podría
+    // fallar la respuesta a propósito unas veces y dejarla sin poder
+    // recuperar su propia cuenta. El bucket de cuenta acá es solo un
+    // registro (útil para monitoreo); la única limitación real de intentos
+    // sobre este endpoint es el bucket por IP, chequeado más arriba.
+    const verification = await verifySecurityAnswer(
+      securityAnswer,
+      user.securityAnswerHash,
+    );
     if (!verification.valid) {
       // Solo se cobra el bucket de cuenta tras un fallo real de identidad,
       // para no bloquear recovery de emails inexistentes / sin hash.
@@ -117,7 +127,11 @@ export async function resetPassword(
     }
 
     if (verification.needsRehash) {
-      await upsertSecurityAnswerHash(admin, user.id, await hashSecurityAnswer(securityAnswer));
+      await upsertSecurityAnswerHash(
+        admin,
+        user.id,
+        await hashSecurityAnswer(securityAnswer),
+      );
     }
   } catch (error) {
     console.error("[forgot-password] No se pudo completar el reset", error);

@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   buildRateLimitKey,
   consumeSecurityRateLimit,
+  isSecurityRateLimitBlocked,
   type RateLimitPolicy,
 } from "@/lib/security-rate-limit";
 import { getRequestIp } from "@/lib/request-ip";
@@ -53,6 +54,11 @@ export async function login(
       return { error: GENERIC_ERROR };
     }
 
+    const accountKey = buildRateLimitKey("login-account", email);
+    if (await isSecurityRateLimitBlocked(admin, accountKey)) {
+      return { error: GENERIC_ERROR };
+    }
+
     const supabase = await createClient();
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
@@ -60,11 +66,7 @@ export async function login(
     });
 
     if (error) {
-      await consumeSecurityRateLimit(
-        admin,
-        buildRateLimitKey("login-account", email),
-        LOGIN_ACCOUNT_LIMIT,
-      );
+      await consumeSecurityRateLimit(admin, accountKey, LOGIN_ACCOUNT_LIMIT);
       return { error: GENERIC_ERROR };
     }
   } catch (error) {

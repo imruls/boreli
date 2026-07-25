@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, BookOpen, CheckCircle2, Trash2 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -16,14 +15,9 @@ import { RatingInput } from "@/components/books/rating-input";
 import { NoteInput } from "@/components/books/note-input";
 import { TagSelector } from "@/components/books/tag-selector";
 import { ProgressInput, type ProgressValue } from "@/components/books/progress-input";
+import { BOOK_STATUS_OPTIONS as OPTIONS } from "@/lib/book-status";
 import { cn } from "@/lib/utils";
 import type { BookStatus, BookTag, ProgressType } from "@/types/book";
-
-const OPTIONS: { status: BookStatus; label: string; icon: LucideIcon }[] = [
-  { status: "want_to_read", label: "Quiero leer", icon: Clock },
-  { status: "reading", label: "Leyendo", icon: BookOpen },
-  { status: "read", label: "Leído", icon: CheckCircle2 },
-];
 
 // Sheet único de edición de una card ya en la biblioteca: reemplaza al viejo
 // `ChangeStatusSheet` (solo status) y suma tags, rating (también para

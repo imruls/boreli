@@ -1,4 +1,6 @@
 import { NOTE_MAX_LENGTH } from "@/lib/book-note";
+import { BOOK_TAGS as VALID_BOOK_TAGS } from "@/lib/book-tags";
+import { isHttpUrl } from "@/lib/utils";
 import type { Book, BookStatus, BookTag, ProgressType } from "@/types/book";
 
 export const BOOK_TITLE_MAX_LENGTH = 500;
@@ -11,13 +13,7 @@ export const BOOK_DESCRIPTION_MAX_LENGTH = 50_000;
 export const BOOK_PUBLISHED_DATE_MAX_LENGTH = 50;
 
 const BOOK_STATUSES = new Set<BookStatus>(["want_to_read", "reading", "read"]);
-const BOOK_TAGS = new Set<BookTag>([
-  "physical",
-  "google_books",
-  "apple_books",
-  "kindle",
-  "pdf",
-]);
+const BOOK_TAGS = new Set<BookTag>(VALID_BOOK_TAGS);
 const PROGRESS_TYPES = new Set<ProgressType>(["percent", "pages"]);
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -72,19 +68,6 @@ function nullableInteger(
     throw new Error(`${field} inválido`);
   }
   return value as number;
-}
-
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return (
-      (url.protocol === "http:" || url.protocol === "https:") &&
-      !url.username &&
-      !url.password
-    );
-  } catch {
-    return false;
-  }
 }
 
 export function parseBookStatus(value: unknown): BookStatus {

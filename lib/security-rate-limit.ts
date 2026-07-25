@@ -27,3 +27,16 @@ export async function consumeSecurityRateLimit(
 
   return data === true;
 }
+
+// A diferencia de consumeSecurityRateLimit, no incrementa el contador: sirve
+// para rechazar una cuenta ya bloqueada ANTES de intentar la operación
+// sensible, sin gastar un intento en el chequeo.
+export async function isSecurityRateLimitBlocked(
+  admin: SupabaseClient,
+  key: string,
+): Promise<boolean> {
+  const { data, error } = await admin.rpc("is_security_rate_limit_blocked", { p_key: key });
+  if (error) throw error;
+
+  return data === true;
+}

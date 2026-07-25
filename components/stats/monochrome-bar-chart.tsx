@@ -22,7 +22,11 @@ interface MonochromeBarChartProps {
 export function MonochromeBarChart({ data, valueLabel, height = 220 }: MonochromeBarChartProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+      <BarChart
+        data={data}
+        margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
+        accessibilityLayer={false}
+      >
         <CartesianGrid vertical={false} stroke="var(--color-ink-border)" />
         <XAxis
           dataKey="label"
@@ -49,7 +53,13 @@ export function MonochromeBarChart({ data, valueLabel, height = 220 }: Monochrom
           labelStyle={{ color: "var(--color-ink)", fontWeight: 600 }}
           formatter={(value) => [value, valueLabel] as [number, string]}
         />
-        <Bar dataKey="value" fill="var(--color-ink)" radius={[4, 4, 0, 0]} maxBarSize={32} />
+        <Bar
+          dataKey="value"
+          fill="var(--color-ink)"
+          radius={[4, 4, 0, 0]}
+          maxBarSize={32}
+          activeBar={false}
+        />
       </BarChart>
     </ResponsiveContainer>
   );

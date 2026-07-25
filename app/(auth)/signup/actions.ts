@@ -8,6 +8,7 @@ import { validatePassword } from "@/lib/password-policy";
 import {
   buildRateLimitKey,
   consumeSecurityRateLimit,
+  isSecurityRateLimitBlocked,
   type RateLimitPolicy,
 } from "@/lib/security-rate-limit";
 import { getRequestIp } from "@/lib/request-ip";
@@ -17,6 +18,11 @@ const SIGNUP_IP_LIMIT: RateLimitPolicy = {
   maxAttempts: 10,
   windowSeconds: 15 * 60,
   blockSeconds: 60 * 60,
+};
+const SIGNUP_ACCOUNT_LIMIT: RateLimitPolicy = {
+  maxAttempts: 5,
+  windowSeconds: 15 * 60,
+  blockSeconds: 30 * 60,
 };
 const GENERIC_ERROR = "No se pudo crear la cuenta. Revisá los datos e intentá de nuevo.";
 
@@ -59,14 +65,30 @@ export async function signup(
       return { error: GENERIC_ERROR };
     }
 
-    const supabase = await createClient();
     const normalizedEmail = email.trim().toLowerCase();
+    const accountKey = buildRateLimitKey("signup-account", normalizedEmail);
+    if (await isSecurityRateLimitBlocked(admin, accountKey)) {
+      return { error: GENERIC_ERROR };
+    }
+
+    const supabase = await createClient();
     const { data, error } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
     });
 
     if (error || !data.user) {
+      return { error: GENERIC_ERROR };
+    }
+
+    // Supabase's anti-enumeration behavior: signUp() on an email that's
+    // already registered returns the existing user (no error) with an empty
+    // `identities` array, instead of failing. Bail out immediately without
+    // touching user_security_answers, or an attacker could sign up with a
+    // victim's email and overwrite their security answer / cause the
+    // catch-block below to delete the victim's account.
+    if (data.user.identities?.length === 0) {
+      await consumeSecurityRateLimit(admin, accountKey, SIGNUP_ACCOUNT_LIMIT);
       return { error: GENERIC_ERROR };
     }
 

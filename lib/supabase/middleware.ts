@@ -3,10 +3,51 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const AUTH_PATHS = ["/login", "/signup", "/forgot-password"];
 
-// Refresca la sesión de Supabase en cada request y protege las rutas del
-// dashboard: sin sesión, redirige a /login; con sesión, sacas /login y /signup.
+const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
+  : "";
+
+// style-src permite 'unsafe-inline': components/books/progress-bar.tsx y
+// recharts (gráficos de perfil/estadisticas) dependen del atributo `style`
+// inline de React para porcentajes/colores dinámicos, que un CSP estricto
+// (nonce/hash) rompería visualmente sin ningún error en consola.
+function buildCsp(nonce: string): string {
+  return [
+    `default-src 'self'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    `style-src 'self' 'unsafe-inline'`,
+    `img-src 'self' https://books.google.com https://books.googleusercontent.com${supabaseOrigin ? ` ${supabaseOrigin}` : ""} data:`,
+    `font-src 'self' data:`,
+    `connect-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
+    `frame-ancestors 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    `object-src 'none'`,
+  ].join("; ");
+}
+
+function applySecurityHeaders(response: NextResponse, csp: string): NextResponse {
+  response.headers.set("Content-Security-Policy", csp);
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains");
+  return response;
+}
+
+// Refresca la sesión de Supabase en cada request, protege las rutas del
+// dashboard (sin sesión → /login, con sesión → saca de /login y /signup) y
+// aplica headers de seguridad (CSP con nonce, HSTS, etc.) a toda respuesta.
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const csp = buildCsp(nonce);
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+
+  let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,7 +59,7 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request });
+          supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options),
           );
@@ -29,19 +70,22 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isAuthPath = AUTH_PATHS.some((path) => request.nextUrl.pathname.startsWith(path));
+  const isAuthPath = AUTH_PATHS.some(
+    (path) =>
+      request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`),
+  );
 
   if (!user && !isAuthPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    return NextResponse.redirect(url);
+    return applySecurityHeaders(NextResponse.redirect(url), csp);
   }
 
   if (user && isAuthPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
-    return NextResponse.redirect(url);
+    return applySecurityHeaders(NextResponse.redirect(url), csp);
   }
 
-  return supabaseResponse;
+  return applySecurityHeaders(supabaseResponse, csp);
 }

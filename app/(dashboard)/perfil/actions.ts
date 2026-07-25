@@ -10,6 +10,7 @@ import { verifySecurityAnswer } from "@/lib/security-answer";
 import {
   buildRateLimitKey,
   consumeSecurityRateLimit,
+  isSecurityRateLimitBlocked,
   type RateLimitPolicy,
 } from "@/lib/security-rate-limit";
 import { getRequestIp } from "@/lib/request-ip";
@@ -72,6 +73,11 @@ export async function deleteAccount(
       return { error: "Demasiados intentos. Esperá unos minutos." };
     }
 
+    const accountKey = buildRateLimitKey("delete-account-user", user.id);
+    if (await isSecurityRateLimitBlocked(admin, accountKey)) {
+      return { error: "Demasiados intentos. Esperá unos minutos." };
+    }
+
     const storedHash = await getSecurityAnswerHash(admin, user.id);
     if (!storedHash) {
       return {
@@ -82,11 +88,7 @@ export async function deleteAccount(
 
     const verification = await verifySecurityAnswer(securityAnswer, storedHash);
     if (!verification.valid) {
-      await consumeSecurityRateLimit(
-        admin,
-        buildRateLimitKey("delete-account-user", user.id),
-        DELETE_ACCOUNT_LIMIT,
-      );
+      await consumeSecurityRateLimit(admin, accountKey, DELETE_ACCOUNT_LIMIT);
       return { error: "La respuesta de seguridad no es correcta." };
     }
 
@@ -95,11 +97,7 @@ export async function deleteAccount(
       password,
     });
     if (signInError) {
-      await consumeSecurityRateLimit(
-        admin,
-        buildRateLimitKey("delete-account-user", user.id),
-        DELETE_ACCOUNT_LIMIT,
-      );
+      await consumeSecurityRateLimit(admin, accountKey, DELETE_ACCOUNT_LIMIT);
       return { error: "La contraseña es incorrecta." };
     }
 

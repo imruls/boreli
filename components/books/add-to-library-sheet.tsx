@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, BookOpen, CheckCircle2 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -14,14 +12,9 @@ import { Button } from "@/components/ui/button";
 import { RatingInput } from "@/components/books/rating-input";
 import { NoteInput } from "@/components/books/note-input";
 import { TagSelector } from "@/components/books/tag-selector";
+import { BOOK_STATUS_OPTIONS as OPTIONS } from "@/lib/book-status";
 import { cn } from "@/lib/utils";
 import type { BookStatus, BookTag } from "@/types/book";
-
-const OPTIONS: { status: BookStatus; label: string; icon: LucideIcon }[] = [
-  { status: "want_to_read", label: "Quiero leer", icon: Clock },
-  { status: "reading", label: "Leyendo", icon: BookOpen },
-  { status: "read", label: "Leído", icon: CheckCircle2 },
-];
 
 // Mapea directo a los 3 status reales del modelo (want_to_read / reading /
 // read) en vez de una "Biblioteca" ambigua. El tag de formato es opcional y

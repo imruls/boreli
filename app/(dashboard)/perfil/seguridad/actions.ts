@@ -7,6 +7,7 @@ import { hashSecurityAnswer } from "@/lib/security-answer";
 import {
   buildRateLimitKey,
   consumeSecurityRateLimit,
+  isSecurityRateLimitBlocked,
   type RateLimitPolicy,
 } from "@/lib/security-rate-limit";
 import { getRequestIp } from "@/lib/request-ip";
@@ -67,16 +68,17 @@ export async function updateSecurityAnswer(
       return { error: "Demasiados intentos. Esperá unos minutos.", success: false };
     }
 
+    const accountKey = buildRateLimitKey("security-answer-update-account", user.id);
+    if (await isSecurityRateLimitBlocked(admin, accountKey)) {
+      return { error: "Demasiados intentos. Esperá unos minutos.", success: false };
+    }
+
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: user.email,
       password,
     });
     if (signInError) {
-      await consumeSecurityRateLimit(
-        admin,
-        buildRateLimitKey("security-answer-update-account", user.id),
-        UPDATE_ACCOUNT_LIMIT,
-      );
+      await consumeSecurityRateLimit(admin, accountKey, UPDATE_ACCOUNT_LIMIT);
       return { error: "La contraseña es incorrecta.", success: false };
     }
 
