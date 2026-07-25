@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, Pencil, ShieldCheck, LogOut } from "lucide-react";
+import { BarChart3, ChevronRight, Pencil, ShieldCheck, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/(dashboard)/actions";
 import { userHasSecurityAnswer } from "@/lib/security-answer-store";
@@ -58,6 +58,14 @@ export default async function PerfilPage() {
         >
           <ShieldCheck className="size-4 text-ink-muted" />
           <span className="flex-1">Seguridad</span>
+          <ChevronRight className="size-4 text-ink-muted" />
+        </Link>
+        <Link
+          href="/perfil/estadisticas"
+          className="flex items-center gap-3 border-b border-ink-border py-3 text-sm font-medium text-ink"
+        >
+          <BarChart3 className="size-4 text-ink-muted" />
+          <span className="flex-1">Estadísticas</span>
           <ChevronRight className="size-4 text-ink-muted" />
         </Link>
         <ExportLibraryButton />
