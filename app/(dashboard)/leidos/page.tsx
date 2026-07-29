@@ -36,7 +36,7 @@ export default async function LeidosPage() {
             items={books}
             showRating
             storageKey="leidos"
-            sortOptions={["date_added", "alphabetical", "rating"]}
+            sortOptions={["date_read", "date_added", "alphabetical", "rating"]}
           />
         )}
       </div>
