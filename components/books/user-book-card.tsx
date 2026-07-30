@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import { BookCard } from "@/components/books/book-card";
 import { BookDetailSheet } from "@/components/books/book-detail-sheet";
@@ -29,6 +30,7 @@ export function UserBookCard({
   showRating?: boolean;
   coverSize?: "sm" | "lg";
 }) {
+  const router = useRouter();
   const [detailOpen, setDetailOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
@@ -107,7 +109,16 @@ export function UserBookCard({
         coverUrl={userBook.book.coverUrl}
         trustedCover={Boolean(userBook.book.googleBooksId)}
         coverSize={coverSize}
-        onClick={() => setDetailOpen(true)}
+        onClick={() => {
+          // Libros de Google Books tienen página propia con descripción,
+          // género y rating de Google; los cargados a mano no tienen nada
+          // de eso que buscar, así que siguen abriendo el sheet de siempre.
+          if (userBook.book.googleBooksId) {
+            router.push(`/libro/${userBook.book.googleBooksId}`);
+          } else {
+            setDetailOpen(true);
+          }
+        }}
         meta={
           userBook.tags.length > 0 || (showRating && userBook.rating) ? (
             <div className="flex flex-wrap items-center gap-2">

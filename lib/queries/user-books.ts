@@ -115,6 +115,33 @@ export async function getAllUserBooks(
   return ((data ?? []) as unknown as UserBookRow[]).map(mapUserBook);
 }
 
+// Busca el `UserBook` de un libro de Google Books ya guardado por el
+// usuario, para que `/libro/[id]` sepa si debe ofrecer "Editar" (ya está en
+// la biblioteca) o "Agregar a biblioteca" (todavía no). `!inner` filtra por
+// una columna de la tabla joineada (`google_books_id`), que si no se fuerza
+// el join a inner Supabase no permite usar en `.eq(...)`.
+export async function getUserBookByGoogleBooksId(
+  supabase: SupabaseServerClient,
+  userId: string,
+  googleBooksId: string,
+): Promise<UserBook | null> {
+  const { data, error } = await supabase
+    .from("user_books")
+    .select(
+      "id, user_id, book_id, status, tags, rating, note, progress_type, progress_current, " +
+        "progress_total_pages, started_at, finished_at, created_at, " +
+        "book:books!inner(id, google_books_id, title, authors, cover_url, page_count, description, published_date)",
+    )
+    .eq("user_id", userId)
+    .eq("book.google_books_id", googleBooksId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return mapUserBook(data as unknown as UserBookRow);
+}
+
 export async function getLibraryCounts(
   supabase: SupabaseServerClient,
   userId: string,

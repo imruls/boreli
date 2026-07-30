@@ -15,6 +15,22 @@ export interface Book {
   publishedDate: string | null;
 }
 
+// Detalle enriquecido de Google Books para `/libro/[id]`: a diferencia de
+// `Book`, `categories`/`averageRating`/`ratingsCount` se piden on-demand en
+// cada visita y no se persisten en la tabla `books`.
+export interface GoogleBookDetail {
+  googleBooksId: string;
+  title: string;
+  authors: string[];
+  coverUrl: string | null;
+  pageCount: number | null;
+  description: string | null;
+  publishedDate: string | null;
+  categories: string[];
+  averageRating: number | null;
+  ratingsCount: number | null;
+}
+
 export interface UserBook {
   id: string;
   userId: string;

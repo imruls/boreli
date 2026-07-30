@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Search as SearchIcon, X, Plus, WifiOff, Check } from "lucide-react";
 import { PageHeader } from "@/components/nav/page-header";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ const STATUS_CONFIRMATION: Record<BookStatus, string> = {
 type SearchStatus = "idle" | "loading" | "error";
 
 export default function BuscarPage() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("Todos");
   const [results, setResults] = useState<Book[]>([]);
@@ -229,10 +231,18 @@ export default function BuscarPage() {
                 authors={book.authors}
                 coverUrl={book.coverUrl}
                 trustedCover={Boolean(book.googleBooksId)}
+                onClick={
+                  book.googleBooksId
+                    ? () => router.push(`/libro/${book.googleBooksId}`)
+                    : undefined
+                }
                 action={
                   <button
                     type="button"
-                    onClick={() => setSelectedBook(book)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setSelectedBook(book);
+                    }}
                     aria-label={`Agregar ${book.title}`}
                     className="flex size-8 items-center justify-center rounded-full bg-ink text-cream"
                   >

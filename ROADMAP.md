@@ -19,7 +19,7 @@ Para el detalle técnico de cada pieza, ver `data-model.md`, `tech-stack.md` y `
 
 ---
 
-## Semana 1 — Fundamentos de diseño + esqueleto técnico
+## 1 — Fundamentos de diseño + esqueleto técnico
 
 **Objetivo:** tener el proyecto corriendo con auth completo y el sistema visual base definido.
 
@@ -40,7 +40,7 @@ ya con la paleta y tipografía definidas.
 
 ---
 
-## Semana 2 — Alta de libros + búsqueda
+## 2 — Alta de libros + búsqueda
 
 **Objetivo:** poder agregar libros a la biblioteca, por búsqueda o carga manual.
 
@@ -55,7 +55,7 @@ lista de pendientes. También poder cargar un libro a mano con los 4 campos defi
 
 ---
 
-## Semana 3 — Las 3 vistas + transición de estados
+## 3 — Las 3 vistas + transición de estados
 
 **Objetivo:** el core funcional de la app.
 
@@ -76,7 +76,7 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
 
 ---
 
-## Semana 4 — Export CSV + pulido responsive
+## 4 — Export CSV + pulido responsive
 
 **Objetivo:** cerrar el MVP dejándolo prolijo y accesible 100% vía navegador (sin instalación).
 
@@ -116,7 +116,7 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
 
 ---
 
-## Buffer / semana 5 (si hace falta)
+## Buffer / 5 (si hace falta)
 
 - [x] Ajustes de UX detectados al usarla vos mismo unos días
 - [x] Revisión final de dominio/deploy
@@ -170,5 +170,3 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
 - El MVP **no** incluye: red social, seguir a otros usuarios, feed público, sincronización
   automática con Kindle/Apple Books (no existen APIs públicas para eso — los tags son manuales),
   ni instalación como PWA — la app es 100% web, se accede con una URL y login desde cualquier navegador.
-- Cada fase semanal asume dedicación full-time; si en algún momento baja el ritmo, las semanas se
-  estiran pero el orden de las fases se mantiene igual.
