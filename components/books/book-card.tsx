@@ -110,7 +110,7 @@ export function BookCard({
       <div
         {...interactiveProps}
         className={cn(
-          "flex flex-col gap-1.5 rounded-2xl border border-ink-border bg-cream p-2",
+          "flex flex-col gap-2 rounded-2xl border border-ink-border bg-cream p-3",
           onClick && "cursor-pointer focus-visible:ring-2 focus-visible:ring-ink/50 focus-visible:outline-none",
           className,
         )}

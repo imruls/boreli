@@ -31,9 +31,11 @@ export default async function HomePage() {
       {reading.length > 0 ? (
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-ink">Leyendo actualmente</h2>
-          <div className="flex flex-col gap-3">
+          <div className="flex gap-3 overflow-x-auto pb-1">
             {reading.map((userBook) => (
-              <UserBookCard key={userBook.id} userBook={userBook} coverSize="lg" />
+              <div key={userBook.id} className="w-36 shrink-0">
+                <UserBookCard userBook={userBook} layout="grid" />
+              </div>
             ))}
           </div>
         </section>

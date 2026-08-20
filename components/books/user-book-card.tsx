@@ -134,14 +134,16 @@ export function UserBookCard({
         }
         footer={
           userBook.status === "reading" ? (
-            <div className="flex flex-col gap-1">
-              {hasProgress(userBook) ? (
-                <ProgressBar
-                  progressType={userBook.progressType}
-                  progressCurrent={userBook.progressCurrent}
-                  progressTotalPages={userBook.progressTotalPages}
-                />
-              ) : null}
+            hasProgress(userBook) ? (
+              // Una vez cargado el progreso, la card ya no ofrece el acceso
+              // rápido: se edita desde ahí en adelante vía "⋯" (EditBookSheet),
+              // el botón era solo el nudge inicial para cargarlo por primera vez.
+              <ProgressBar
+                progressType={userBook.progressType}
+                progressCurrent={userBook.progressCurrent}
+                progressTotalPages={userBook.progressTotalPages}
+              />
+            ) : (
               <button
                 type="button"
                 onClick={(event) => {
@@ -150,9 +152,9 @@ export function UserBookCard({
                 }}
                 className="self-start text-xs font-semibold text-ink-muted underline-offset-2 hover:underline"
               >
-                {hasProgress(userBook) ? "Actualizar progreso" : "Agregar progreso"}
+                Agregar progreso
               </button>
-            </div>
+            )
           ) : undefined
         }
         action={
