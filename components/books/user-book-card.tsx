@@ -25,10 +25,12 @@ export function UserBookCard({
   userBook,
   showRating = false,
   coverSize = "sm",
+  layout = "list",
 }: {
   userBook: UserBook;
   showRating?: boolean;
   coverSize?: "sm" | "lg";
+  layout?: "list" | "grid";
 }) {
   const router = useRouter();
   const [detailOpen, setDetailOpen] = useState(false);
@@ -109,6 +111,7 @@ export function UserBookCard({
         coverUrl={userBook.book.coverUrl}
         trustedCover={Boolean(userBook.book.googleBooksId)}
         coverSize={coverSize}
+        layout={layout}
         onClick={() => {
           // Libros de Google Books tienen página propia con descripción,
           // género y rating de Google; los cargados a mano no tienen nada

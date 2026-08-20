@@ -37,6 +37,7 @@ export default async function LeidosPage() {
             showRating
             storageKey="leidos"
             sortOptions={["date_read", "date_added", "alphabetical", "rating"]}
+            enableGridView
           />
         )}
       </div>
