@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
+import type { Metadata } from "next";
 import { WifiOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -27,6 +28,27 @@ const DETAIL_RATE_LIMIT: RateLimitPolicy = {
 const getCachedVolume = unstable_cache(getVolumeById, ["google-books-detail-v1"], {
   revalidate: DETAIL_CACHE_SECONDS,
 });
+
+// El middleware ya bloquea acceso sin sesión a `/(dashboard)/*`, así que acá
+// no hace falta repetir el chequeo de auth/rate-limit: en el peor caso (ID
+// todavía no cacheado) esto agrega una lectura más contra `unstable_cache`,
+// no una request nueva a Google Books fuera de la ventana de revalidación.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  if (!id || id.length > BOOK_ID_MAX_LENGTH) return { title: "Libro — Boreli" };
+
+  try {
+    const volume = await getCachedVolume(id);
+    const title = volume ? mapVolumeToDetail(volume).title : null;
+    return { title: title ? `${title} — Boreli` : "Libro — Boreli" };
+  } catch {
+    return { title: "Libro — Boreli" };
+  }
+}
 
 function ErrorState() {
   return (
