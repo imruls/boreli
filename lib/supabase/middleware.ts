@@ -7,15 +7,28 @@ const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
   : "";
 
-// style-src permite 'unsafe-inline': components/books/progress-bar.tsx y
-// recharts (gráficos de perfil/estadisticas) dependen del atributo `style`
-// inline de React para porcentajes/colores dinámicos, que un CSP estricto
-// (nonce/hash) rompería visualmente sin ningún error en consola.
+// style-src-attr permite 'unsafe-inline': components/books/progress-bar.tsx,
+// toggle-group.tsx y recharts (gráficos de perfil/estadisticas) dependen del
+// atributo `style` inline de React para porcentajes/colores dinámicos, que
+// un CSP estricto (nonce/hash) rompería visualmente sin ningún error en
+// consola — un nonce no sirve para el atributo `style` (solo para <style>/
+// <link>) y un hash no funciona porque el valor cambia por request.
+// style-src-elem sí queda en 'self': la app nunca renderiza un <style> propio
+// (todo el CSS sale del stylesheet compilado por Tailwind), así que no hace
+// falta relajarlo — si algún día una inyección lograra insertar un <style>
+// tag, esto lo bloquea igual, aunque el atributo siga permitido.
+// React usa eval() en modo desarrollo para Fast Refresh / reconstrucción de
+// stack traces (nunca en producción) — sin 'unsafe-eval' acá, `pnpm dev`
+// tira una pantalla de error apenas se carga cualquier página.
+const isDev = process.env.NODE_ENV !== "production";
+
 function buildCsp(nonce: string): string {
   return [
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? ` 'unsafe-eval'` : ""}`,
     `style-src 'self' 'unsafe-inline'`,
+    `style-src-elem 'self'`,
+    `style-src-attr 'unsafe-inline'`,
     `img-src 'self' https://books.google.com https://books.googleusercontent.com${supabaseOrigin ? ` ${supabaseOrigin}` : ""} data:`,
     `font-src 'self' data:`,
     `connect-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,

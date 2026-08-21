@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { detectImageMimeType } from "@/lib/file-signature";
 
 export type ProfileState = {
   error: string | null;
@@ -10,7 +11,6 @@ export type ProfileState = {
 
 const MAX_DISPLAY_NAME_LENGTH = 40;
 const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
-const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const AVATAR_BUCKET = "avatars";
 
 // Actualiza `display_name` y, si el usuario elige una foto nueva, sube el
@@ -47,16 +47,21 @@ export async function updateProfile(
   const hasNewAvatar = avatar instanceof File && avatar.size > 0;
   if (hasNewAvatar) {
     const file = avatar as File;
-    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
-      return { error: "La foto debe ser JPG, PNG o WEBP.", success: false };
-    }
     if (file.size > MAX_AVATAR_SIZE_BYTES) {
       return { error: "La foto no puede superar los 5MB.", success: false };
     }
 
+    // No confiamos en `file.type` (lo declara el cliente y es spoofeable):
+    // detectamos el formato real por los magic bytes del archivo.
+    const headerBytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    const realType = detectImageMimeType(headerBytes);
+    if (!realType) {
+      return { error: "La foto debe ser JPG, PNG o WEBP.", success: false };
+    }
+
     const { error: uploadError } = await supabase.storage
       .from(AVATAR_BUCKET)
-      .upload(`${user.id}/avatar`, file, { upsert: true, contentType: file.type });
+      .upload(`${user.id}/avatar`, file, { upsert: true, contentType: realType });
     if (uploadError) {
       return { error: "No se pudo subir la foto. Intentá de nuevo.", success: false };
     }

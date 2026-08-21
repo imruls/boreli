@@ -107,6 +107,16 @@ grant select on public.books to anon, authenticated;
 grant insert on public.books to authenticated;
 
 grant select, insert, update, delete on public.user_books to authenticated;
+
+-- insert_books solo exige `authenticated`, sin límite de volumen: un usuario
+-- podría floodear el catálogo llamando directo a la REST API de Supabase, sin
+-- pasar por el Server Action de la app. Este trigger reusa
+-- consume_security_rate_limit (ver "Controles server-only" más abajo) para
+-- limitar altas por usuario a nivel DB, no solo en la UI.
+create trigger books_insert_rate_limit
+  before insert on books
+  for each row
+  execute function enforce_books_insert_rate_limit();
 ```
 
 ### Controles server-only
@@ -126,6 +136,14 @@ explícitamente. Ningún identificador en claro se persiste en ella.
 `find_password_recovery_user` para devolver únicamente `user_id` + `security_answer_hash`, y
 expone `has_security_answer()` a `authenticated` como booleano (nunca el hash). El hash **no**
 debe guardarse en `user_metadata` porque Supabase lo incluye en el JWT.
+
+`supabase/migrations/20260820000000_books_insert_rate_limit.sql` agrega
+`enforce_books_insert_rate_limit()`, un trigger `before insert` sobre `books` (`security definer`,
+mismo `search_path` fijo que el resto de las funciones sensibles) que llama a
+`consume_security_rate_limit` con una key por `auth.uid()` (30 altas / 10 min, bloqueo 30 min). A
+diferencia de las RPCs de arriba, esta función no necesita `grant execute` propio: Postgres no
+permite invocar una función que devuelve `trigger` fuera de un trigger, así que queda protegida por
+su propio tipo de retorno.
 
 ### Nota sobre el constraint de rating
 `rating_requires_read` bloquea a nivel de base de datos que se guarde un rating en un libro que no

@@ -9,13 +9,21 @@ const STATUS_LABELS: Record<BookStatus, string> = {
 
 const HEADERS = ["Título", "Autor", "Estado", "Tags", "Rating", "Reseña", "Empezado", "Terminado"];
 
+// Antepone `'` a campos que empiezan con `=`, `+`, `-`, `@`, tab o CR para que
+// Excel/Sheets no los interprete como fórmula al abrir el CSV exportado
+// (CSV/formula injection vía título, autor o reseña cargados manualmente).
+function neutralizeFormulaInjection(value: string): string {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
 // RFC 4180: solo hace falta entrecomillar (y escapar `"` duplicándola) si el
 // campo tiene coma, comilla o salto de línea — evita citar todo el archivo.
 function escapeCsvField(value: string): string {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
+  const safeValue = neutralizeFormulaInjection(value);
+  if (/[",\n]/.test(safeValue)) {
+    return `"${safeValue.replace(/"/g, '""')}"`;
   }
-  return value;
+  return safeValue;
 }
 
 function formatDate(value: string | null): string {
