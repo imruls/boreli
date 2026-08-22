@@ -7,7 +7,7 @@ import {
   consumeSecurityRateLimit,
   type RateLimitPolicy,
 } from "@/lib/security-rate-limit";
-import { searchGoogleBooks } from "@/lib/google-books";
+import { searchGoogleBooks, type BookSearchField } from "@/lib/google-books";
 
 const MAX_RESULTS = 20;
 const MAX_QUERY_LENGTH = 200;
@@ -17,10 +17,11 @@ const SEARCH_RATE_LIMIT: RateLimitPolicy = {
   windowSeconds: 60,
   blockSeconds: 5 * 60,
 };
+const SEARCH_FIELDS: ReadonlySet<BookSearchField> = new Set(["all", "title", "author"]);
 
 const getCachedBooks = unstable_cache(
-  (query: string) => searchGoogleBooks(query, MAX_RESULTS),
-  ["google-books-search-v1"],
+  (query: string, field: BookSearchField) => searchGoogleBooks(query, MAX_RESULTS, field),
+  ["google-books-search-v2"],
   { revalidate: SEARCH_CACHE_SECONDS },
 );
 
@@ -35,6 +36,10 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q")?.trim();
+  const rawField = searchParams.get("field");
+  const field: BookSearchField = SEARCH_FIELDS.has(rawField as BookSearchField)
+    ? (rawField as BookSearchField)
+    : "all";
 
   if (!query) {
     return NextResponse.json({ books: [] });
@@ -65,7 +70,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const books = await getCachedBooks(query);
+    const books = await getCachedBooks(query, field);
     return NextResponse.json(
       { books },
       { headers: { "Cache-Control": "private, max-age=60" } },

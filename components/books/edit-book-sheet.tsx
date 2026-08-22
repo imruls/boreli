@@ -188,30 +188,38 @@ export function EditBookSheet({
               </div>
 
               {showsProgress ? (
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-xs font-semibold text-ink-muted">
-                    Progreso de lectura (opcional)
-                  </span>
-                  <ProgressInput
-                    value={progress}
-                    onChange={setProgress}
-                    bookPageCount={bookPageCount}
-                  />
-                </div>
+                <>
+                  <Separator />
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-ink-muted">
+                      Progreso de lectura (opcional)
+                    </span>
+                    <ProgressInput
+                      value={progress}
+                      onChange={setProgress}
+                      bookPageCount={bookPageCount}
+                    />
+                  </div>
+                </>
               ) : null}
 
               {needsRating ? (
                 <>
-                  <div className="flex flex-col gap-1.5 rounded-lg border border-ink-border px-3 py-3">
-                    <span className="text-xs font-semibold text-ink-muted">
-                      Calificación (obligatoria para marcar como leído)
+                  <Separator />
+                  <div className="flex flex-col gap-3 rounded-lg border border-ink-border px-3 py-3">
+                    <span className="text-xs font-bold tracking-wide text-ink uppercase">
+                      Tu opinión
                     </span>
-                    <RatingInput value={rating} onChange={setRating} />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold text-ink-muted">Reseña (opcional)</span>
-                    <NoteInput value={note} onChange={setNote} />
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-semibold text-ink-muted">
+                        Calificación (obligatoria para marcar como leído)
+                      </span>
+                      <RatingInput value={rating} onChange={setRating} />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-semibold text-ink-muted">Reseña (opcional)</span>
+                      <NoteInput value={note} onChange={setNote} />
+                    </div>
                   </div>
                 </>
               ) : null}

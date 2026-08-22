@@ -41,3 +41,18 @@ export function isHttpUrl(value: string): boolean {
     return false
   }
 }
+
+const URL_SCHEME_PATTERN = /^[a-zA-Z][a-zA-Z\d+.-]*:/
+
+// Antepone "https://" únicamente cuando el valor no trae ningún esquema
+// (el típo típico es pegar "midominio.com/portada.jpg" sin protocolo). Si ya
+// trae un esquema explícito -sea cual sea, incluido uno peligroso como
+// `javascript:` o `data:`- no lo tocamos: lo dejamos pasar tal cual a
+// `isHttpUrl`, que lo va a rechazar. Nunca hay que "arreglar" un esquema
+// existente reinterpretándolo como si fuera parte de un host, porque ahí es
+// donde se colaría una URL maliciosa disfrazada de typo.
+export function normalizeHttpUrl(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed || URL_SCHEME_PATTERN.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}

@@ -2,8 +2,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 // Fila de título de pantalla (mockup: "top-bar" con flecha atrás + título).
-// El botón de volver solo se muestra en mobile: en desktop la navegación ya
-// está siempre visible en AppHeader.
+// Visible en todos los breakpoints: AppHeader solo tiene navegación de nivel
+// superior (Inicio/Buscar/Perfil), no un "volver" real, así que en desktop
+// también hace falta este control explícito.
 export function PageHeader({
   title,
   backHref = "/",
@@ -19,7 +20,7 @@ export function PageHeader({
         <Link
           href={backHref}
           aria-label="Volver"
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg text-ink hover:bg-ink-border/40 md:hidden"
+          className="flex size-11 shrink-0 items-center justify-center rounded-lg text-ink hover:bg-ink-border/40"
         >
           <ArrowLeft className="size-5" />
         </Link>

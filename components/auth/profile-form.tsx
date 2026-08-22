@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
-import { CheckCircle2, Camera } from "lucide-react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ConfirmationBanner, useConfirmationBanner } from "@/components/ui/confirmation-banner";
 import { updateProfile, removeAvatar, type ProfileState } from "@/app/(dashboard)/perfil/editar/actions";
 
 const initialState: ProfileState = { error: null, success: false };
@@ -23,10 +24,19 @@ export function ProfileForm({
   const [removeState, removeAction, isRemovePending] = useActionState(removeAvatar, initialState);
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { message: confirmation, show: showConfirmation } = useConfirmationBanner();
 
   const initial = email ? email.charAt(0).toUpperCase() : "?";
   const currentAvatarUrl = preview ?? avatarUrl;
   const isBusy = isPending || isRemovePending;
+
+  useEffect(() => {
+    if (state.success && !isPending) showConfirmation("Perfil actualizado.");
+  }, [state.success, isPending, showConfirmation]);
+
+  useEffect(() => {
+    if (removeState.success && !isRemovePending) showConfirmation("Foto eliminada.");
+  }, [removeState.success, isRemovePending, showConfirmation]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,9 +50,9 @@ export function ProfileForm({
             type="button"
             aria-label="Cambiar foto de perfil"
             onClick={() => fileInputRef.current?.click()}
-            className="absolute -right-1 -bottom-1 flex size-7 items-center justify-center rounded-full border border-ink-border bg-cream text-ink"
+            className="absolute -right-1.5 -bottom-1.5 flex size-9 items-center justify-center rounded-full border border-ink-border bg-cream text-ink"
           >
-            <Camera className="size-3.5" />
+            <Camera className="size-4" />
           </button>
           <input
             ref={fileInputRef}
@@ -90,12 +100,7 @@ export function ProfileForm({
         {removeState.error ? (
           <p className="w-full text-sm text-destructive">{removeState.error}</p>
         ) : null}
-        {(state.success && !isPending) || (removeState.success && !isRemovePending) ? (
-          <div className="flex w-full items-center gap-2 text-sm text-ink">
-            <CheckCircle2 className="size-4" />
-            <p>Perfil actualizado.</p>
-          </div>
-        ) : null}
+        <ConfirmationBanner message={confirmation} className="w-full" />
 
         <Button type="submit" disabled={isBusy} className="mt-2 w-full">
           {isPending ? "Guardando..." : "Guardar cambios"}

@@ -9,7 +9,7 @@ interface EmptyStateAction {
   onClick?: () => void;
 }
 
-interface EmptyStateProps {
+export interface EmptyStateProps {
   icon: LucideIcon;
   title: string;
   description?: string;

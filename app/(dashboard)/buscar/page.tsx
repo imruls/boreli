@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Search as SearchIcon, X, Plus, WifiOff, Check } from "lucide-react";
+import { Search as SearchIcon, X, Plus, WifiOff } from "lucide-react";
 import { PageHeader } from "@/components/nav/page-header";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -11,12 +11,21 @@ import { BookListSkeleton } from "@/components/books/book-list-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AddToLibrarySheet } from "@/components/books/add-to-library-sheet";
 import { ManualBookForm } from "@/components/books/manual-book-form";
+import { ConfirmationBanner, useConfirmationBanner } from "@/components/ui/confirmation-banner";
 import { addBookToLibrary } from "@/app/(dashboard)/buscar/actions";
+import type { BookSearchField } from "@/lib/google-books";
 import type { Book, BookStatus, BookTag } from "@/types/book";
 
-const CATEGORIES = ["Todos", "Libros", "Autores", "Editoriales"];
+// Sin "Editoriales": Google Books indexa el campo de editorial de forma muy
+// inconsistente (`inpublisher:`), así que ese filtro suele devolver poco o
+// nada incluso para editoriales conocidas — mejor no ofrecerlo que ofrecer
+// uno que decepciona.
+const CATEGORIES: { label: string; value: BookSearchField }[] = [
+  { label: "Todos", value: "all" },
+  { label: "Libros", value: "title" },
+  { label: "Autores", value: "author" },
+];
 const DEBOUNCE_MS = 400;
-const CONFIRMATION_MS = 2500;
 
 const STATUS_CONFIRMATION: Record<BookStatus, string> = {
   want_to_read: "Agregado a Quiero leer",
@@ -29,7 +38,7 @@ type SearchStatus = "idle" | "loading" | "error";
 export default function BuscarPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<string>("Todos");
+  const [category, setCategory] = useState<BookSearchField>("all");
   const [results, setResults] = useState<Book[]>([]);
   const [searchStatus, setSearchStatus] = useState<SearchStatus>("idle");
   const [retryToken, setRetryToken] = useState(0);
@@ -37,9 +46,8 @@ export default function BuscarPage() {
   const [isManualFormOpen, setIsManualFormOpen] = useState(false);
   const [isSaving, startSaving] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [confirmation, setConfirmation] = useState<string | null>(null);
+  const { message: confirmation, show: showConfirmation } = useConfirmationBanner();
   const latestRequestRef = useRef(0);
-  const confirmationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce del input real contra `app/api/books/search/route.ts` (proxy a
   // Google Books). `latestRequestRef` descarta respuestas de búsquedas viejas
@@ -58,9 +66,10 @@ export default function BuscarPage() {
     const timeoutId = setTimeout(async () => {
       setSearchStatus("loading");
       try {
-        const response = await fetch(`/api/books/search?q=${encodeURIComponent(trimmed)}`, {
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `/api/books/search?q=${encodeURIComponent(trimmed)}&field=${category}`,
+          { signal: controller.signal },
+        );
         if (!response.ok) throw new Error("Search request failed");
         const data = (await response.json()) as { books: Book[] };
         if (latestRequestRef.current !== requestId) return;
@@ -78,13 +87,7 @@ export default function BuscarPage() {
       clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [query, retryToken]);
-
-  useEffect(() => {
-    return () => {
-      if (confirmationTimeoutRef.current) clearTimeout(confirmationTimeoutRef.current);
-    };
-  }, []);
+  }, [query, category, retryToken]);
 
   function handleClearSearch() {
     setQuery("");
@@ -117,12 +120,6 @@ export default function BuscarPage() {
     setSelectedBook(book);
   }
 
-  function showConfirmation(message: string) {
-    setConfirmation(message);
-    if (confirmationTimeoutRef.current) clearTimeout(confirmationTimeoutRef.current);
-    confirmationTimeoutRef.current = setTimeout(() => setConfirmation(null), CONFIRMATION_MS);
-  }
-
   const trimmedQuery = query.trim();
   const isLoading = searchStatus === "loading";
   const isError = searchStatus === "error";
@@ -131,12 +128,7 @@ export default function BuscarPage() {
     <div className="flex flex-1 flex-col gap-4 pb-24 md:pb-8">
       <PageHeader title="Buscar" showBack={false} />
 
-      {confirmation ? (
-        <div className="mx-4 flex items-center gap-2 rounded-xl bg-ink px-3.5 py-2.5 text-sm text-cream sm:mx-6">
-          <Check className="size-4 shrink-0" />
-          {confirmation}
-        </div>
-      ) : null}
+      <ConfirmationBanner message={confirmation} className="mx-4 sm:mx-6" />
 
       {saveError ? (
         <div className="mx-4 flex items-center justify-between gap-2 rounded-xl border border-ink-border px-3.5 py-2.5 text-sm text-ink sm:mx-6">
@@ -184,13 +176,13 @@ export default function BuscarPage() {
         <ToggleGroup
           type="single"
           value={category}
-          onValueChange={(value) => value && setCategory(value)}
+          onValueChange={(value) => value && setCategory(value as BookSearchField)}
           className="flex-nowrap gap-2 overflow-x-auto pb-1"
         >
-          {CATEGORIES.map((label) => (
+          {CATEGORIES.map(({ label, value }) => (
             <ToggleGroupItem
-              key={label}
-              value={label}
+              key={value}
+              value={value}
               className="rounded-full border border-ink-border px-3.5 text-xs font-semibold text-ink-muted data-[state=on]:border-ink data-[state=on]:bg-ink data-[state=on]:text-cream"
             >
               {label}

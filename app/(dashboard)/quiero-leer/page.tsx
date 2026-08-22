@@ -24,16 +24,19 @@ export default async function QuieroLeerPage() {
     <div className="flex flex-1 flex-col gap-4 pb-24 md:pb-8">
       <PageHeader title="Quiero leer" />
       <div className="flex flex-1 flex-col px-4 sm:px-6">
-        {books.length === 0 ? (
-          <EmptyState
-            icon={BookOpen}
-            title="Tu lista de Quiero leer está vacía"
-            description="Agregá libros para empezar a armar tu colección."
-            action={{ label: "Buscar libros", href: "/buscar" }}
-          />
-        ) : (
-          <BookListWithFilter items={books} storageKey="quiero-leer" enableGridView />
-        )}
+        <BookListWithFilter
+          items={books}
+          storageKey="quiero-leer"
+          enableGridView
+          emptyState={
+            <EmptyState
+              icon={BookOpen}
+              title="Tu lista de Quiero leer está vacía"
+              description="Agregá libros para empezar a armar tu colección."
+              action={{ label: "Buscar libros", href: "/buscar" }}
+            />
+          }
+        />
       </div>
     </div>
   );

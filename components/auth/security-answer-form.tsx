@@ -1,11 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { useActionState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
+import { ConfirmationBanner, useConfirmationBanner } from "@/components/ui/confirmation-banner";
 import {
   updateSecurityAnswer,
   type SecurityAnswerState,
@@ -15,6 +15,11 @@ const initialState: SecurityAnswerState = { error: null, success: false };
 
 export function SecurityAnswerForm({ hasSecurityAnswer }: { hasSecurityAnswer: boolean }) {
   const [state, formAction, isPending] = useActionState(updateSecurityAnswer, initialState);
+  const { message: confirmation, show: showConfirmation } = useConfirmationBanner();
+
+  useEffect(() => {
+    if (state.success && !isPending) showConfirmation("Respuesta guardada.");
+  }, [state.success, isPending, showConfirmation]);
 
   return (
     <form action={formAction} className="flex w-full flex-col gap-4">
@@ -47,12 +52,7 @@ export function SecurityAnswerForm({ hasSecurityAnswer }: { hasSecurityAnswer: b
         </p>
       </div>
       {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
-      {state.success && !isPending ? (
-        <div className="flex items-center gap-2 text-sm text-ink">
-          <CheckCircle2 className="size-4" />
-          <p>Respuesta guardada.</p>
-        </div>
-      ) : null}
+      <ConfirmationBanner message={confirmation} />
       <Button type="submit" disabled={isPending}>
         {isPending ? "Guardando..." : "Guardar respuesta"}
       </Button>

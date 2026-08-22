@@ -24,22 +24,21 @@ export default async function LeidosPage() {
     <div className="flex flex-1 flex-col gap-4 pb-24 md:pb-8">
       <PageHeader title="Leídos" />
       <div className="flex flex-1 flex-col px-4 sm:px-6">
-        {books.length === 0 ? (
-          <EmptyState
-            icon={CheckCircle2}
-            title="Todavía no marcaste libros como leídos"
-            description="Los libros que termines de leer van a aparecer acá, con tu rating."
-            action={{ label: "Buscar libros", href: "/buscar" }}
-          />
-        ) : (
-          <BookListWithFilter
-            items={books}
-            showRating
-            storageKey="leidos"
-            sortOptions={["date_read", "date_added", "alphabetical", "rating"]}
-            enableGridView
-          />
-        )}
+        <BookListWithFilter
+          items={books}
+          showRating
+          storageKey="leidos"
+          sortOptions={["date_read", "date_added", "alphabetical", "rating"]}
+          enableGridView
+          emptyState={
+            <EmptyState
+              icon={CheckCircle2}
+              title="Todavía no marcaste libros como leídos"
+              description="Los libros que termines de leer van a aparecer acá, con tu rating."
+              action={{ label: "Buscar libros", href: "/buscar" }}
+            />
+          }
+        />
       </div>
     </div>
   );

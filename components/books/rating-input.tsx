@@ -29,7 +29,7 @@ export function RatingInput({
             aria-checked={value === star}
             aria-label={`${star} de 5 estrellas`}
             onClick={() => onChange(star)}
-            className="p-0.5"
+            className="flex size-11 items-center justify-center"
           >
             <Star className={cn("size-6", isFilled ? "fill-ink text-ink" : "fill-none text-ink-border")} />
           </button>

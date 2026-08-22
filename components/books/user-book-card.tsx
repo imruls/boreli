@@ -11,6 +11,7 @@ import { BookTagBadge } from "@/components/books/book-tag-badge";
 import { RatingStars } from "@/components/books/rating-stars";
 import { ProgressBar } from "@/components/books/progress-bar";
 import type { ProgressValue } from "@/components/books/progress-input";
+import { ConfirmationBanner, useConfirmationBanner } from "@/components/ui/confirmation-banner";
 import { hasProgress } from "@/lib/book-progress";
 import { updateUserBook, deleteUserBook } from "@/app/(dashboard)/actions";
 import type { BookStatus, BookTag, UserBook } from "@/types/book";
@@ -26,11 +27,17 @@ export function UserBookCard({
   showRating = false,
   coverSize = "sm",
   layout = "list",
+  onDeleted,
 }: {
   userBook: UserBook;
   showRating?: boolean;
   coverSize?: "sm" | "lg";
   layout?: "list" | "grid";
+  // La card se desmonta apenas se borra el libro (revalidatePath saca la fila
+  // de la lista): un banner de confirmación local nunca llegaría a
+  // mostrarse. El padre (que sí sobrevive a esa re-renderización) es quien
+  // puede dar el cierre de la acción si le pasa este callback.
+  onDeleted?: (title: string) => void;
 }) {
   const router = useRouter();
   const [detailOpen, setDetailOpen] = useState(false);
@@ -41,6 +48,7 @@ export function UserBookCard({
   const [isSavingProgress, startSavingProgress] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [progressError, setProgressError] = useState<string | null>(null);
+  const { message: confirmation, show: showConfirmation } = useConfirmationBanner();
 
   function handleSave(
     status: BookStatus,
@@ -62,6 +70,7 @@ export function UserBookCard({
           progressTotalPages: progress?.progressTotalPages ?? undefined,
         });
         setEditOpen(false);
+        showConfirmation("Cambios guardados");
       } catch {
         setError("No pudimos actualizar el libro. Probá de nuevo.");
       }
@@ -74,6 +83,7 @@ export function UserBookCard({
       try {
         await deleteUserBook(userBook.id);
         setEditOpen(false);
+        onDeleted?.(userBook.book.title);
       } catch {
         setError("No pudimos eliminar el libro. Probá de nuevo.");
       }
@@ -97,6 +107,7 @@ export function UserBookCard({
           progressTotalPages: progress.progressTotalPages ?? undefined,
         });
         setProgressOpen(false);
+        showConfirmation("Progreso actualizado");
       } catch {
         setProgressError("No pudimos actualizar el progreso. Probá de nuevo.");
       }
@@ -144,13 +155,17 @@ export function UserBookCard({
                 progressTotalPages={userBook.progressTotalPages}
               />
             ) : (
+              // Sin colores de acento en la marca, el `bg-ink` sólido es la
+              // única forma de hacer que una acción "resalte" del resto de
+              // la card (Von Restorff) — se reserva para esta, la única
+              // acción que de verdad importa completar acá.
               <button
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
                   setProgressOpen(true);
                 }}
-                className="self-start text-xs font-semibold text-ink-muted underline-offset-2 hover:underline"
+                className="self-start rounded-full bg-ink px-3.5 py-1.5 text-xs font-semibold text-cream"
               >
                 Agregar progreso
               </button>
@@ -165,12 +180,14 @@ export function UserBookCard({
               setEditOpen(true);
             }}
             aria-label={`Editar ${userBook.book.title}`}
-            className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-ink-border/40"
+            className="flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-ink-border/40"
           >
             <MoreVertical className="size-4" />
           </button>
         }
       />
+
+      <ConfirmationBanner message={confirmation} className="mt-2" />
 
       <BookDetailSheet
         open={detailOpen}

@@ -190,8 +190,38 @@ function buildVolumesUrl(params: Record<string, string>): string {
   return url.toString();
 }
 
-export async function searchGoogleBooks(query: string, maxResults: number): Promise<Book[]> {
-  const url = buildVolumesUrl({ q: query, maxResults: String(maxResults), printType: "books" });
+// Google Books soporta restringir la búsqueda a un campo con un prefijo en
+// `q` (`intitle:`, `inauthor:`). No incluye `inpublisher:` a propósito: ese
+// campo está indexado de forma muy inconsistente en Google Books y filtrar
+// por editorial suele devolver pocos o ningún resultado incluso para
+// editoriales conocidas, así que no se ofrece como categoría en la UI.
+export type BookSearchField = "all" | "title" | "author";
+
+const SEARCH_FIELD_PREFIX: Record<Exclude<BookSearchField, "all">, string> = {
+  title: "intitle:",
+  author: "inauthor:",
+};
+
+// Envolver en comillas hace que el prefijo aplique a la frase completa: sin
+// comillas, Google solo restringe la primera palabra al campo y el resto
+// queda como búsqueda libre (ej. "harry potter" con intitle: sin comillas
+// busca "harry" en el título y "potter" en cualquier parte).
+function buildFieldQuery(query: string, field: BookSearchField): string {
+  if (field === "all") return query;
+  const sanitized = query.replace(/"/g, "");
+  return `${SEARCH_FIELD_PREFIX[field]}"${sanitized}"`;
+}
+
+export async function searchGoogleBooks(
+  query: string,
+  maxResults: number,
+  field: BookSearchField = "all",
+): Promise<Book[]> {
+  const url = buildVolumesUrl({
+    q: buildFieldQuery(query, field),
+    maxResults: String(maxResults),
+    printType: "books",
+  });
 
   let response: Response;
   try {

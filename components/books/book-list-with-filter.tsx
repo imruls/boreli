@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Search as SearchIcon, X, List, LayoutGrid } from "lucide-react";
 import { TagFilterSelect, type TagFilterValue } from "@/components/books/tag-filter-select";
 import { BookSortSelect } from "@/components/books/book-sort-select";
 import { UserBookCard } from "@/components/books/user-book-card";
 import { Input } from "@/components/ui/input";
+import { ConfirmationBanner, useConfirmationBanner } from "@/components/ui/confirmation-banner";
 import { sortUserBooks, type BookSortOption } from "@/lib/book-sort";
 import { filterUserBooksByQuery } from "@/lib/book-search";
 import { useLocalStorageState } from "@/lib/use-local-storage-state";
@@ -22,6 +23,17 @@ export function BookListWithFilter({
   // Habilita el toggle lista/grilla. Off por default para no cambiar el
   // comportamiento de listas que no lo pidieron (ej. Quiero leer).
   enableGridView = false,
+  // Estado vacío propio de cada lista (ej. "Tu lista de Quiero leer está
+  // vacía"), ya renderizado por la page como elemento (`<EmptyState .../>`),
+  // no como objeto de config: este componente es Client Component, y un
+  // objeto con un ícono de lucide-react (una referencia a función) no se
+  // puede pasar cruzando el límite server/client — un elemento sí. Vive acá
+  // y no en la page porque este componente es el que sobrevive al
+  // revalidate tras borrar un libro, así que es el único lugar donde se
+  // puede decidir bien cuándo mostrarlo (ver `onDeleted` de `UserBookCard`
+  // más abajo — si se borra el último libro, hay que mostrar primero la
+  // confirmación y recién después el estado vacío, no al revés).
+  emptyState,
 }: {
   items: UserBook[];
   showRating?: boolean;
@@ -30,8 +42,12 @@ export function BookListWithFilter({
   storageKey: string;
   sortOptions?: BookSortOption[];
   enableGridView?: boolean;
+  emptyState: ReactNode;
 }) {
   const [query, setQuery] = useState("");
+  const { message: confirmation, show: showConfirmation } = useConfirmationBanner();
+  const handleDeleted = (title: string) =>
+    showConfirmation(`"${title}" eliminado de tu biblioteca`);
   const [filter, setFilter] = useState<TagFilterValue>("all");
   const [sort, setSort] = useLocalStorageState<BookSortOption>(
     `boreli:sort:${storageKey}`,
@@ -45,8 +61,23 @@ export function BookListWithFilter({
     return sortUserBooks(byTag, sort);
   }, [items, query, filter, sort]);
 
+  // Si se acaba de borrar el último libro de la lista, `items` ya llega
+  // vacío en este render (revalidatePath ya corrió), pero todavía queremos
+  // mostrar la confirmación antes que el estado vacío — si mostráramos el
+  // estado vacío directamente, el usuario nunca ve el cierre de la acción.
+  if (items.length === 0) {
+    return (
+      <>
+        <ConfirmationBanner message={confirmation} className="mb-3" />
+        {!confirmation ? emptyState : null}
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
+      <ConfirmationBanner message={confirmation} />
+
       <div className="relative">
         <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-muted" />
         <Input
@@ -110,13 +141,24 @@ export function BookListWithFilter({
       ) : enableGridView && view === "grid" ? (
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
           {filtered.map((userBook) => (
-            <UserBookCard key={userBook.id} userBook={userBook} showRating={showRating} layout="grid" />
+            <UserBookCard
+              key={userBook.id}
+              userBook={userBook}
+              showRating={showRating}
+              layout="grid"
+              onDeleted={handleDeleted}
+            />
           ))}
         </div>
       ) : (
         <div className="flex flex-col gap-2.5">
           {filtered.map((userBook) => (
-            <UserBookCard key={userBook.id} userBook={userBook} showRating={showRating} />
+            <UserBookCard
+              key={userBook.id}
+              userBook={userBook}
+              showRating={showRating}
+              onDeleted={handleDeleted}
+            />
           ))}
         </div>
       )}

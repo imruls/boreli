@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { isHttpUrl } from "@/lib/utils";
+import { isHttpUrl, normalizeHttpUrl } from "@/lib/utils";
 import {
   BOOK_AUTHOR_MAX_LENGTH,
   BOOK_COVER_URL_MAX_LENGTH,
@@ -47,8 +47,11 @@ export function ManualBookForm({
       return;
     }
 
-    const trimmedCoverUrl = coverUrl.trim();
-    if (trimmedCoverUrl && !isHttpUrl(trimmedCoverUrl)) {
+    // `normalizeHttpUrl` solo antepone "https://" cuando falta el protocolo
+    // (typo común); si ya trae un esquema (incluido uno peligroso) lo deja
+    // igual para que `isHttpUrl` lo rechace, no para que se cuele como host.
+    const normalizedCoverUrl = normalizeHttpUrl(coverUrl);
+    if (normalizedCoverUrl && !isHttpUrl(normalizedCoverUrl)) {
       setError("La URL de la portada tiene que empezar con http:// o https://.");
       return;
     }
@@ -60,7 +63,7 @@ export function ManualBookForm({
       googleBooksId: null,
       title: trimmedTitle,
       authors: authorList,
-      coverUrl: trimmedCoverUrl || null,
+      coverUrl: normalizedCoverUrl || null,
       pageCount: parsedPageCount && parsedPageCount > 0 ? parsedPageCount : null,
       description: null,
       publishedDate: null,
@@ -119,6 +122,7 @@ export function ManualBookForm({
               type="url"
               value={coverUrl}
               onChange={(event) => setCoverUrl(event.target.value)}
+              onBlur={(event) => setCoverUrl(normalizeHttpUrl(event.target.value))}
               maxLength={BOOK_COVER_URL_MAX_LENGTH}
               placeholder="https://…"
             />
