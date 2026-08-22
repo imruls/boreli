@@ -1,4 +1,5 @@
 import { NOTE_MAX_LENGTH } from "@/lib/book-note";
+import { PROGRESS_PERCENT_MAX, PROGRESS_PERCENT_MIN } from "@/lib/book-progress";
 import { BOOK_TAGS as VALID_BOOK_TAGS } from "@/lib/book-tags";
 import { isHttpUrl } from "@/lib/utils";
 import type { Book, BookStatus, BookTag, ProgressType } from "@/types/book";
@@ -209,8 +210,8 @@ export function parseUserBookInput(value: unknown): ValidatedUserBookInput {
   const progressCurrent = nullableInteger(
     value.progressCurrent,
     "Progreso actual",
-    0,
-    progressType === "percent" ? 100 : BOOK_PAGE_COUNT_MAX,
+    PROGRESS_PERCENT_MIN,
+    progressType === "percent" ? PROGRESS_PERCENT_MAX : BOOK_PAGE_COUNT_MAX,
   );
   if (progressCurrent === null) {
     throw new Error("Falta el valor de progreso");
