@@ -13,7 +13,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "db:login": "supabase login",
-    "db:link": "supabase link --project-ref lhzmqvsxrnnbiadzrnsj",
+    "db:link": "supabase link --project-ref qijffxvhtkonegavgcab",
     "db:push": "supabase db push --include-all",
     "db:reset": "supabase db reset"
   },

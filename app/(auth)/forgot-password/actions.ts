@@ -1,80 +1,52 @@
 "use server";
 
-import {
-  createAdminClient,
-  findUserByEmail,
-  upsertSecurityAnswerHash,
-} from "@/lib/supabase/admin";
-import {
-  hashSecurityAnswer,
-  runDummySecurityAnswerWork,
-  verifySecurityAnswer,
-} from "@/lib/security-answer";
+import { headers } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   buildRateLimitKey,
   consumeSecurityRateLimit,
   type RateLimitPolicy,
 } from "@/lib/security-rate-limit";
 import { getRequestIp } from "@/lib/request-ip";
-import { validatePassword } from "@/lib/password-policy";
 
 export type ForgotPasswordState = {
   error: string | null;
   success: boolean;
 };
 
-const GENERIC_ERROR =
-  "No se pudo verificar la identidad. Revisá el email, la respuesta y volvé a intentar.";
-const ACCOUNT_LIMIT: RateLimitPolicy = {
-  maxAttempts: 5,
-  windowSeconds: 15 * 60,
-  blockSeconds: 30 * 60,
-};
+const SEND_ERROR = "No se pudo enviar el mail. Intentá de nuevo en unos minutos.";
 const IP_LIMIT: RateLimitPolicy = {
-  maxAttempts: 20,
+  maxAttempts: 10,
   windowSeconds: 15 * 60,
   blockSeconds: 60 * 60,
 };
 
-// Reset de contraseña sin servicio de email: en vez del flujo estándar de
-// Supabase (magic link por mail), se verifica identidad con la respuesta a
-// la pregunta de seguridad fija (ver lib/security-question.ts) guardada en
-// la tabla privada `user_security_answers`, y se cambia la contraseña con
-// la Service Role Key. El mensaje de error es siempre el mismo genérico
-// para no filtrar si el email existe o si fue la respuesta la que falló.
-export async function resetPassword(
+async function getAppOrigin(): Promise<string> {
+  const headerList = await headers();
+  const origin = headerList.get("origin");
+  if (origin) return origin;
+
+  const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
+  const protocol = headerList.get("x-forwarded-proto") ?? "http";
+  return `${protocol}://${host}`;
+}
+
+// Reset de contraseña con el flujo de email de Supabase: manda un link de
+// recuperación que vuelve a `/auth/recovery` (canjea el código PKCE por una
+// sesión) y de ahí a `/reset-password`. La respuesta es la misma exista o no
+// el email, para no filtrar qué cuentas están registradas.
+export async function requestPasswordReset(
   _prevState: ForgotPasswordState,
   formData: FormData,
 ): Promise<ForgotPasswordState> {
   const email = formData.get("email");
-  const securityAnswer = formData.get("securityAnswer");
-  const newPassword = formData.get("newPassword");
-  const confirmPassword = formData.get("confirmPassword");
 
-  if (
-    typeof email !== "string" ||
-    typeof securityAnswer !== "string" ||
-    typeof newPassword !== "string" ||
-    typeof confirmPassword !== "string" ||
-    !email ||
-    !securityAnswer ||
-    !newPassword ||
-    !confirmPassword
-  ) {
-    return { error: "Completá todos los campos.", success: false };
+  if (typeof email !== "string" || !email) {
+    return { error: "Ingresá tu email.", success: false };
   }
-
-  const passwordError = validatePassword(newPassword);
-  if (passwordError) {
-    return { error: passwordError, success: false };
-  }
-
-  if (newPassword !== confirmPassword) {
-    return { error: "Las contraseñas no coinciden.", success: false };
-  }
-
-  if (email.length > 320 || securityAnswer.length > 200) {
-    return { error: GENERIC_ERROR, success: false };
+  if (email.length > 320) {
+    return { error: SEND_ERROR, success: false };
   }
 
   try {
@@ -86,56 +58,19 @@ export async function resetPassword(
       IP_LIMIT,
     );
     if (!ipAllowed) {
-      return { error: GENERIC_ERROR, success: false };
+      return { error: SEND_ERROR, success: false };
     }
 
-    const user = await findUserByEmail(admin, email);
-    if (!user?.securityAnswerHash) {
-      await runDummySecurityAnswerWork();
-      return { error: GENERIC_ERROR, success: false };
-    }
-
-    // A diferencia de login/signup/seguridad, acá NO se chequea el bucket de
-    // cuenta antes de verificar (con isSecurityRateLimitBlocked): si lo
-    // hiciéramos, un atacante que solo conoce el email de la víctima podría
-    // fallar la respuesta a propósito unas veces y dejarla sin poder
-    // recuperar su propia cuenta. El bucket de cuenta acá es solo un
-    // registro (útil para monitoreo); la única limitación real de intentos
-    // sobre este endpoint es el bucket por IP, chequeado más arriba.
-    const verification = await verifySecurityAnswer(
-      securityAnswer,
-      user.securityAnswerHash,
-    );
-    if (!verification.valid) {
-      // Solo se cobra el bucket de cuenta tras un fallo real de identidad,
-      // para no bloquear recovery de emails inexistentes / sin hash.
-      // Un acierto correcto sigue permitido aunque el bucket de fallos esté
-      // agotado (mitiga DoS de recuperación).
-      await consumeSecurityRateLimit(
-        admin,
-        buildRateLimitKey("password-reset-account", email),
-        ACCOUNT_LIMIT,
-      );
-      return { error: GENERIC_ERROR, success: false };
-    }
-
-    const { error } = await admin.auth.admin.updateUserById(user.id, {
-      password: newPassword,
+    const supabase = await createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: `${await getAppOrigin()}/auth/recovery`,
     });
     if (error) {
       throw error;
     }
-
-    if (verification.needsRehash) {
-      await upsertSecurityAnswerHash(
-        admin,
-        user.id,
-        await hashSecurityAnswer(securityAnswer),
-      );
-    }
   } catch (error) {
-    console.error("[forgot-password] No se pudo completar el reset", error);
-    return { error: GENERIC_ERROR, success: false };
+    console.error("[forgot-password] No se pudo enviar el mail de recuperación", error);
+    return { error: SEND_ERROR, success: false };
   }
 
   return { error: null, success: true };

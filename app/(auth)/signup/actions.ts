@@ -2,8 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient, upsertSecurityAnswerHash } from "@/lib/supabase/admin";
-import { hashSecurityAnswer } from "@/lib/security-answer";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { validatePassword } from "@/lib/password-policy";
 import {
   buildRateLimitKey,
@@ -26,30 +25,27 @@ const SIGNUP_ACCOUNT_LIMIT: RateLimitPolicy = {
 };
 const GENERIC_ERROR = "No se pudo crear la cuenta. Revisá los datos e intentá de nuevo.";
 
+export type SignupActionState = AuthActionState & {
+  // La cuenta se creó pero Supabase exige confirmar el email antes de dar sesión.
+  pendingConfirmation?: boolean;
+};
+
 export async function signup(
-  _prevState: AuthActionState,
+  _prevState: SignupActionState,
   formData: FormData,
-): Promise<AuthActionState> {
+): Promise<SignupActionState> {
   const email = formData.get("email");
   const password = formData.get("password");
-  const securityAnswer = formData.get("securityAnswer");
 
-  if (
-    typeof email !== "string" ||
-    typeof password !== "string" ||
-    typeof securityAnswer !== "string" ||
-    !email ||
-    !password ||
-    !securityAnswer.trim()
-  ) {
-    return { error: "Completá email, contraseña y la respuesta de seguridad." };
+  if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
+    return { error: "Completá email y contraseña." };
   }
 
   const passwordError = validatePassword(password);
   if (passwordError) {
     return { error: passwordError };
   }
-  if (email.length > 320 || securityAnswer.length > 200) {
+  if (email.length > 320) {
     return { error: GENERIC_ERROR };
   }
 
@@ -83,32 +79,18 @@ export async function signup(
 
     // Supabase's anti-enumeration behavior: signUp() on an email that's
     // already registered returns the existing user (no error) with an empty
-    // `identities` array, instead of failing. Bail out immediately without
-    // touching user_security_answers, or an attacker could sign up with a
-    // victim's email and overwrite their security answer / cause the
-    // catch-block below to delete the victim's account.
+    // `identities` array, instead of failing. Count it against the account
+    // rate limit and answer with the same generic error.
     if (data.user.identities?.length === 0) {
       await consumeSecurityRateLimit(admin, accountKey, SIGNUP_ACCOUNT_LIMIT);
       return { error: GENERIC_ERROR };
     }
 
-    try {
-      // El hash va a la tabla privada (solo service_role), nunca a user_metadata/JWT.
-      await upsertSecurityAnswerHash(
-        admin,
-        data.user.id,
-        await hashSecurityAnswer(securityAnswer),
-      );
-    } catch (upsertError) {
-      await admin.auth.admin.deleteUser(data.user.id);
-      throw upsertError;
-    }
-
-    // Si el proyecto de Supabase tiene "Confirm email" activado, signUp no
-    // devuelve sesión hasta que el usuario confirme por mail — el MVP asume
-    // esa opción desactivada (ver CLAUDE.md: sin verificación de email).
+    // Con "Confirm email" activado en Supabase, signUp no devuelve sesión
+    // hasta que el usuario confirme por mail: la cuenta ya existe, solo falta
+    // confirmar e ingresar desde /login.
     if (!data.session) {
-      return { error: GENERIC_ERROR };
+      return { error: null, pendingConfirmation: true };
     }
   } catch (error) {
     console.error("[signup] No se pudo crear la cuenta", error);

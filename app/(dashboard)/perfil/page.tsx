@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BarChart3, ChevronRight, Pencil, ShieldCheck, LogOut } from "lucide-react";
+import { BarChart3, ChevronRight, Pencil, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/(dashboard)/actions";
-import { userHasSecurityAnswer } from "@/lib/security-answer-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/nav/page-header";
@@ -28,7 +27,6 @@ export default async function PerfilPage() {
   const avatarUrl =
     typeof user?.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null;
   const initial = (displayName ?? email).charAt(0).toUpperCase() || "?";
-  const hasSecurityAnswer = await userHasSecurityAnswer(supabase);
 
   return (
     <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-8">
@@ -50,14 +48,6 @@ export default async function PerfilPage() {
         >
           <Pencil className="size-4 text-ink-muted" />
           <span className="flex-1">Editar perfil</span>
-          <ChevronRight className="size-4 text-ink-muted" />
-        </Link>
-        <Link
-          href="/perfil/seguridad"
-          className="flex items-center gap-3 border-b border-ink-border py-3 text-sm font-medium text-ink"
-        >
-          <ShieldCheck className="size-4 text-ink-muted" />
-          <span className="flex-1">Seguridad</span>
           <ChevronRight className="size-4 text-ink-muted" />
         </Link>
         <Link
@@ -83,7 +73,7 @@ export default async function PerfilPage() {
 
       <div className="flex flex-col gap-1 px-4 sm:px-6">
         <p className="text-xs font-bold tracking-wide text-destructive uppercase">Zona peligrosa</p>
-        <DeleteAccountSheet hasSecurityAnswer={hasSecurityAnswer} />
+        <DeleteAccountSheet />
       </div>
     </div>
   );

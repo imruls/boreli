@@ -2,6 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const AUTH_PATHS = ["/login", "/signup", "/forgot-password"];
+// Accesibles con o sin sesión: el link de recuperación de contraseña llega
+// sin sesión y es justamente el que la crea.
+const PUBLIC_PATHS = ["/auth/recovery"];
 
 const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
@@ -83,10 +86,14 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isAuthPath = AUTH_PATHS.some(
-    (path) =>
-      request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`),
-  );
+  const matchesPath = (path: string) =>
+    request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`);
+
+  if (PUBLIC_PATHS.some(matchesPath)) {
+    return applySecurityHeaders(supabaseResponse, csp);
+  }
+
+  const isAuthPath = AUTH_PATHS.some(matchesPath);
 
   if (!user && !isAuthPath) {
     const url = request.nextUrl.clone();

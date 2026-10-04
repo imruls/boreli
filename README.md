@@ -56,9 +56,8 @@ Abrir [http://localhost:3000](http://localhost:3000) en el navegador.
 | `pnpm db:reset` | Reconstruye la DB local desde migraciones + seed |
 
 > Al desplegar una versión que incluya migraciones, aplicar `pnpm db:push`
-> antes que el código de aplicación. El reset de contraseña, la tabla
-> `user_security_answers` y los rate limits dependen de las RPCs/tablas
-> versionadas en `supabase/migrations/`.
+> antes que el código de aplicación. Los rate limits dependen de las
+> RPCs/tablas versionadas en `supabase/migrations/`.
 
 ## Documentación del proyecto
 

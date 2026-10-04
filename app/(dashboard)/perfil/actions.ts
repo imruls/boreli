@@ -2,11 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import {
-  createAdminClient,
-  getSecurityAnswerHash,
-} from "@/lib/supabase/admin";
-import { verifySecurityAnswer } from "@/lib/security-answer";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   buildRateLimitKey,
   consumeSecurityRateLimit,
@@ -30,29 +26,19 @@ const DELETE_ACCOUNT_LIMIT: RateLimitPolicy = {
   blockSeconds: 30 * 60,
 };
 
-// Borrado definitivo de la cuenta, a pedido del usuario desde /perfil. Como
-// no hay AlertDialog en el repo ni confirmación por email, la barrera de
-// seguridad es doble: la contraseña actual (reautenticando con
-// signInWithPassword) y la respuesta a la pregunta de seguridad fija (mismo
-// mecanismo que app/(auth)/forgot-password/actions.ts). A diferencia de ese
-// flujo, acá el usuario ya está autenticado — no hay riesgo de enumeración
-// de emails, así que los errores son específicos por campo.
+// Borrado definitivo de la cuenta, a pedido del usuario desde /perfil. La
+// barrera de seguridad es la contraseña actual (reautenticando con
+// signInWithPassword), con rate limit por IP y por usuario. Acá el usuario
+// ya está autenticado — no hay riesgo de enumeración de emails, así que los
+// errores son específicos.
 export async function deleteAccount(
   _prevState: DeleteAccountState,
   formData: FormData,
 ): Promise<DeleteAccountState> {
-  const securityAnswer = formData.get("securityAnswer");
   const password = formData.get("password");
 
   if (typeof password !== "string" || !password) {
     return { error: "Ingresá tu contraseña." };
-  }
-  if (
-    typeof securityAnswer !== "string" ||
-    !securityAnswer.trim() ||
-    securityAnswer.length > 200
-  ) {
-    return { error: "Respondé la pregunta de seguridad." };
   }
 
   const supabase = await createClient();
@@ -78,20 +64,6 @@ export async function deleteAccount(
       return { error: "Demasiados intentos. Esperá unos minutos." };
     }
 
-    const storedHash = await getSecurityAnswerHash(admin, user.id);
-    if (!storedHash) {
-      return {
-        error:
-          "Todavía no configuraste una pregunta de seguridad. Hacelo desde /perfil/seguridad.",
-      };
-    }
-
-    const verification = await verifySecurityAnswer(securityAnswer, storedHash);
-    if (!verification.valid) {
-      await consumeSecurityRateLimit(admin, accountKey, DELETE_ACCOUNT_LIMIT);
-      return { error: "La respuesta de seguridad no es correcta." };
-    }
-
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: user.email,
       password,
@@ -104,7 +76,7 @@ export async function deleteAccount(
     // Sin ON DELETE CASCADE de user_books hacia auth.users (data-model.md):
     // hay que borrar la biblioteca del usuario antes de poder borrar su
     // cuenta de Auth, o la foreign key rechaza el borrado. `books` es catálogo
-    // compartido y no se toca. `user_security_answers` sí cascada con el user.
+    // compartido y no se toca.
     const { error: deleteBooksError } = await supabase
       .from("user_books")
       .delete()

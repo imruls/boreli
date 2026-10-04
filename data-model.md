@@ -5,14 +5,12 @@ Fuente de verdad del esquema. Cualquier cambio de modelo empieza acá, no direct
 ## Esquema SQL (Supabase/Postgres)
 
 ```sql
-create extension if not exists "uuid-ossp";
-
 create type book_status as enum ('want_to_read', 'reading', 'read');
 create type book_tag as enum ('physical', 'google_books', 'apple_books', 'kindle', 'pdf');
 
 -- Catálogo de libros, compartido entre todos los usuarios (evita duplicar datos de la API)
 create table books (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   google_books_id text unique,
   title text not null,
   authors text[],
@@ -43,7 +41,7 @@ create table books (
 
 -- La relación usuario-libro: acá vive el estado, tags y rating
 create table user_books (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) not null,
   book_id uuid references books(id) not null,
   status book_status not null default 'want_to_read',
@@ -122,20 +120,16 @@ create trigger books_insert_rate_limit
 ### Controles server-only
 
 `supabase/migrations/20260722010000_security_hardening.sql` agrega
-`security_rate_limits` y dos RPCs que solo puede ejecutar `service_role`:
+`security_rate_limits` y las RPCs de rate limit que solo puede ejecutar `service_role`:
 
 - `consume_security_rate_limit(...)`: consume intentos de forma atómica por una key hasheada.
-- `find_password_recovery_user(email)`: consulta `auth.users` sin listar todo Auth.
 
 La tabla tiene RLS habilitado, no posee policies para `anon`/`authenticated` y revoca sus grants
 explícitamente. Ningún identificador en claro se persiste en ella.
 
-`supabase/migrations/20260722020000_security_answers_private.sql` agrega
-`user_security_answers` (hash de la respuesta de seguridad) con el mismo modelo de privilegios
-(solo `service_role`), migra/limpia hashes legacy fuera de `user_metadata`, actualiza
-`find_password_recovery_user` para devolver únicamente `user_id` + `security_answer_hash`, y
-expone `has_security_answer()` a `authenticated` como booleano (nunca el hash). El hash **no**
-debe guardarse en `user_metadata` porque Supabase lo incluye en el JWT.
+La pregunta de seguridad (tabla `user_security_answers`, RPCs `find_password_recovery_user` y
+`has_security_answer`) se eliminó en `20261003000000_drop_security_answers.sql`: la recuperación
+de contraseña usa el flujo de email de Supabase (ver `tech-stack.md`).
 
 `supabase/migrations/20260820000000_books_insert_rate_limit.sql` agrega
 `enforce_books_insert_rate_limit()`, un trigger `before insert` sobre `books` (`security definer`,
@@ -269,9 +263,6 @@ necesiten consultarlos por otro lado (join, búsqueda, unicidad). Por eso, **no 
   (mismo fallback que ya existía).
 - `avatar_url`: string (URL pública), opcional. Apunta a un archivo en el bucket `avatars` de
   Supabase Storage.
-
-La **respuesta de seguridad** es un secreto de autenticación y **no** va en `user_metadata`
-(quedaría en el JWT). Vive en `user_security_answers` (ver controles server-only más arriba).
 
 ### Bucket `avatars`
 

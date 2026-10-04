@@ -2,8 +2,6 @@
 -- Tiene un timestamp anterior a note/avatars/progress para que una base vacía
 -- pueda reconstruirse únicamente desde `supabase/migrations`.
 
-create extension if not exists "uuid-ossp";
-
 do $$
 begin
   create type public.book_status as enum ('want_to_read', 'reading', 'read');
@@ -27,7 +25,7 @@ end
 $$;
 
 create table if not exists public.books (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   google_books_id text unique,
   title text not null,
   authors text[],
@@ -39,7 +37,7 @@ create table if not exists public.books (
 );
 
 create table if not exists public.user_books (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) not null,
   book_id uuid references public.books(id) not null,
   status public.book_status not null default 'want_to_read',

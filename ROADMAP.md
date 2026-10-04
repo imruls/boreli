@@ -121,14 +121,11 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
 - [x] Ajustes de UX detectados al usarla vos mismo unos días
 - [x] Revisión final de dominio/deploy
 - [x] Actualizar `CLAUDE.md` con cualquier convención nueva que haya surgido
-- [x] Recuperación de contraseña **sin servicio de email**: pregunta de seguridad fija para todos
-      los usuarios (`lib/security-question.ts` + `lib/security-answer.ts`), definida al crear la
-      cuenta y verificada server-side con la Service Role Key (`lib/supabase/admin.ts`) para poder
-      cambiar la contraseña sin el magic link por mail de Supabase. Flujo en
-      `app/(auth)/forgot-password/` (link desde el login) y `/perfil/seguridad` para que cuentas ya
-      existentes configuren su respuesta. Ver detalle en `tech-stack.md`
+- [x] Recuperación de contraseña con el flujo de email de Supabase: `/forgot-password` (link desde
+      el login) → `/auth/recovery` → `/reset-password`. Reemplazó a la pregunta de seguridad, que se
+      eliminó del proyecto. Ver detalle en `tech-stack.md`
 - [x] Mostrar/ocultar contraseña (`components/ui/password-input.tsx`) en login, signup y el campo
-      de nueva contraseña de `/forgot-password`
+      de nueva contraseña de `/reset-password`
 - [x] Reseña personal por libro leído (`note` en `user_books`, texto libre hasta 300 caracteres,
       opcional, solo aplica si `status = 'read'` — constraint `note_requires_read` en
       `data-model.md`, mismo criterio que `rating` pero sin ser obligatoria). Se edita junto al
