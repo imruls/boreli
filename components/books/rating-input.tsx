@@ -17,7 +17,7 @@ export function RatingInput({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center gap-1", className)} role="radiogroup" aria-label="Calificación">
+    <div className={cn("flex items-center", className)} role="radiogroup" aria-label="Calificación">
       {Array.from({ length: 5 }).map((_, index) => {
         const star = index + 1;
         const isFilled = value !== null && star <= value;
@@ -29,9 +29,12 @@ export function RatingInput({
             aria-checked={value === star}
             aria-label={`${star} de 5 estrellas`}
             onClick={() => onChange(star)}
-            className="flex size-11 items-center justify-center"
+            className="flex size-11 items-center justify-center rounded-full outline-none active:opacity-70 focus-visible:ring-2 focus-visible:ring-tint"
           >
-            <Star className={cn("size-6", isFilled ? "fill-ink text-ink" : "fill-none text-ink-border")} />
+            <Star
+              className={cn("size-7", isFilled ? "fill-tint text-tint" : "fill-none text-label-tertiary")}
+              strokeWidth={1.75}
+            />
           </button>
         );
       })}

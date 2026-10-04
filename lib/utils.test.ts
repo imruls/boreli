@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isHttpUrl, normalizeHttpUrl } from "@/lib/utils";
+import { cn, isHttpUrl, normalizeHttpUrl } from "@/lib/utils";
 
 describe("normalizeHttpUrl", () => {
   it("antepone https:// cuando no hay ningún esquema", () => {
@@ -43,5 +43,16 @@ describe("normalizeHttpUrl", () => {
       "https://midominio.com/portada.jpg",
     );
     expect(normalizeHttpUrl("   ")).toBe("");
+  });
+});
+
+describe("cn", () => {
+  it("conserva los tamaños de la escala de HIG junto a un color de texto", () => {
+    expect(cn("text-caption-2", "text-tint")).toBe("text-caption-2 text-tint");
+    expect(cn("text-headline text-label")).toBe("text-headline text-label");
+  });
+
+  it("resuelve conflictos entre tamaños de la escala", () => {
+    expect(cn("text-body", "text-footnote")).toBe("text-footnote");
   });
 });

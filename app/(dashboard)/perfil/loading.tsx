@@ -3,17 +3,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-8">
-      <PageHeader title="Perfil" showBack={false} />
+    <div className="flex flex-1 flex-col gap-4">
+      <PageHeader title="Perfil" />
 
-      <div className="flex flex-col items-center gap-2 px-4 sm:px-6">
-        <Skeleton className="size-10 rounded-full" />
-        <Skeleton className="h-4 w-40" />
-      </div>
-
-      <div className="flex flex-col gap-4 px-4 sm:px-6">
-        <Skeleton className="h-5 w-32" />
-        <Skeleton className="h-5 w-28" />
+      <div className="flex flex-col gap-8 px-(--layout-margin)">
+        <div className="flex flex-col items-center gap-2">
+          <Skeleton className="size-20 rounded-full" />
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <Skeleton className="h-[89px] w-full rounded-[10px]" />
+        <Skeleton className="h-11 w-full rounded-[10px]" />
+        <Skeleton className="h-11 w-full rounded-[10px]" />
       </div>
     </div>
   );

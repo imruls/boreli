@@ -150,6 +150,26 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
 
 ---
 
+## Rediseño HIG (Human Interface Guidelines)
+
+Llevar la UI al sistema de `design-system.md`: patrones de iOS 17/18 en mobile, sidebar tipo iPadOS
+en pantallas ≥ 768px, modo claro y oscuro, fuente del sistema. Por fases, verificando cada una en
+375px / tablet / desktop y en los dos modos antes de pasar a la siguiente.
+
+- [x] **Fundaciones:** tokens de color claro/oscuro en `app/globals.css`, fuente del sistema +
+      escala tipográfica de HIG como utilities, `viewport-fit=cover`, `color-scheme` y `theme-color`
+      por modo, logo con variante para modo oscuro; sacar Inter
+- [x] **Navegación:** `PageHeader` (Large Title que colapsa / título inline + botón atrás `‹`),
+      tab bar translúcida en mobile, sidebar en ≥ 768px; se elimina `AppHeader`
+- [x] **Componentes base:** botones (filled/tinted/gray/plain), campos, lista agrupada, search
+      field, segmented control, menú pop-up, sheets con encabezado Cancelar/Guardar, action sheet
+      destructivo, HUD de confirmación, chips, estados vacíos, placeholders de carga
+- [x] **Pantallas:** auth, Inicio, Quiero leer / Leídos, Buscar, detalle de libro, sheets de
+      libro, Perfil / Editar perfil / Estadísticas
+- [x] **QA:** contraste en ambos modos, teclado y foco, `prefers-reduced-motion`, safe areas en iPhone
+
+---
+
 ## Backlog post-MVP (no bloquea el lanzamiento)
 
 - Verificación por código de email en cada login/signup (se probó para el MVP y se descartó porque
@@ -157,7 +177,6 @@ dos listas a la vez, pidiendo rating al finalizarlo, y sin errores de constraint
   pruebas, con rate limits muy bajos)
 - Import de CSV (para cerrar el círculo de portabilidad de datos)
 - Estadísticas (libros leídos por año, por género, páginas totales)
-- Modo oscuro
 - Reordenar manualmente la lista de "quiero leer" (prioridad)
 
 ---

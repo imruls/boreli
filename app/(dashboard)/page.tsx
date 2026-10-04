@@ -1,9 +1,10 @@
-import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
-import { Search, ChevronRight, Clock, CheckCircle2 } from "lucide-react";
+import { Clock, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getLibraryCounts, getUserBooksByStatus } from "@/lib/queries/user-books";
 import { ReadingSection } from "@/components/books/reading-section";
+import { PageHeader } from "@/components/nav/page-header";
+import { ListRow, ListSection } from "@/components/ui/list";
+import { SearchFieldLink } from "@/components/ui/search-field";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -19,52 +20,21 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="flex flex-1 flex-col gap-6 px-4 pt-4 pb-24 sm:px-6 md:pb-8">
-      <Link
-        href="/buscar"
-        className="flex items-center gap-2 rounded-xl border border-ink-border px-3.5 py-2.5 text-sm text-ink-muted"
-      >
-        <Search className="size-4" />
-        Buscar libros, autores…
-      </Link>
+    <div className="flex flex-1 flex-col gap-4">
+      <PageHeader title="Inicio" />
+      <div className="flex flex-col gap-8 px-(--layout-margin)">
+        <SearchFieldLink href="/buscar" placeholder="Buscar libros, autores" />
 
-      <ReadingSection books={reading} />
+        <ReadingSection books={reading} />
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-ink">Mi biblioteca</h2>
-        <div className="flex flex-col gap-2">
-          <LibraryLink href="/quiero-leer" icon={Clock} label="Quiero leer" count={counts.want_to_read} />
-          <LibraryLink href="/leidos" icon={CheckCircle2} label="Leídos" count={counts.read} />
-        </div>
-      </section>
+        <section className="flex flex-col gap-2">
+          <h2 className="text-title-3 text-label">Mi biblioteca</h2>
+          <ListSection>
+            <ListRow href="/quiero-leer" icon={Clock} label="Quiero leer" detail={counts.want_to_read} />
+            <ListRow href="/leidos" icon={CheckCircle2} label="Leídos" detail={counts.read} />
+          </ListSection>
+        </section>
+      </div>
     </div>
-  );
-}
-
-function LibraryLink({
-  href,
-  icon: Icon,
-  label,
-  count,
-}: {
-  href: string;
-  icon: LucideIcon;
-  label: string;
-  count: number;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center justify-between rounded-xl border border-ink-border px-4 py-3"
-    >
-      <span className="flex items-center gap-2 text-sm font-medium text-ink">
-        <Icon className="size-4 text-ink-muted" />
-        {label}
-      </span>
-      <span className="flex items-center gap-1 text-sm text-ink-muted">
-        {count}
-        <ChevronRight className="size-4" />
-      </span>
-    </Link>
   );
 }

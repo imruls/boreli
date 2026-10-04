@@ -23,6 +23,10 @@ const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
 // React usa eval() en modo desarrollo para Fast Refresh / reconstrucción de
 // stack traces (nunca en producción) — sin 'unsafe-eval' acá, `pnpm dev`
 // tira una pantalla de error apenas se carga cualquier página.
+// Mismo criterio para style-src-elem: el indicador/overlay de Next en
+// desarrollo inyecta <style> inline en su shadow DOM; sin 'unsafe-inline'
+// queda sin estilos y se dibuja como una caja/línea suelta arriba a la
+// izquierda. En producción ese indicador no existe y la directiva sigue en 'self'.
 const isDev = process.env.NODE_ENV !== "production";
 
 function buildCsp(nonce: string): string {
@@ -30,7 +34,7 @@ function buildCsp(nonce: string): string {
     `default-src 'self'`,
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? ` 'unsafe-eval'` : ""}`,
     `style-src 'self' 'unsafe-inline'`,
-    `style-src-elem 'self'`,
+    `style-src-elem 'self'${isDev ? ` 'unsafe-inline'` : ""}`,
     `style-src-attr 'unsafe-inline'`,
     `img-src 'self' https://books.google.com https://books.googleusercontent.com${supabaseOrigin ? ` ${supabaseOrigin}` : ""} data:`,
     `font-src 'self' data:`,

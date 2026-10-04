@@ -4,8 +4,12 @@ import * as React from "react"
 import { Dialog as SheetPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { XIcon } from "lucide-react"
+
+// Sheet modal de HIG (ver design-system.md → "Sheets"): sube desde abajo en
+// mobile y en ≥ 768px se muestra centrado como "form sheet" de iPad. El
+// encabezado es una barra de navegación (`SheetNavBar`: Cancelar · Título ·
+// Guardar), sin botón X. No lleva grabber: HIG lo reserva para sheets
+// redimensionables (con detents), y estos tienen un solo tamaño.
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
@@ -23,12 +27,6 @@ function SheetClose({
   return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
 }
 
-function SheetPortal({
-  ...props
-}: React.ComponentProps<typeof SheetPrimitive.Portal>) {
-  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />
-}
-
 function SheetOverlay({
   className,
   ...props
@@ -37,7 +35,7 @@ function SheetOverlay({
     <SheetPrimitive.Overlay
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 z-50 bg-black/40 duration-300 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props}
@@ -48,88 +46,70 @@ function SheetOverlay({
 function SheetContent({
   className,
   children,
-  side = "right",
-  showCloseButton = true,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Content> & {
-  side?: "top" | "right" | "bottom" | "left"
-  showCloseButton?: boolean
-}) {
+}: React.ComponentProps<typeof SheetPrimitive.Content>) {
   return (
-    <SheetPortal>
+    <SheetPrimitive.Portal>
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
-        data-side={side}
+        // Los sheets se describen con su título y contenido; sin Description
+        // explícita, Radix pide desactivar el aria-describedby automático.
+        aria-describedby={undefined}
         className={cn(
-          "fixed z-50 flex flex-col gap-4 bg-popover bg-clip-padding text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-[side=bottom]:data-open:slide-in-from-bottom-10 data-[side=left]:data-open:slide-in-from-left-10 data-[side=right]:data-open:slide-in-from-right-10 data-[side=top]:data-open:slide-in-from-top-10 data-closed:animate-out data-closed:fade-out-0 data-[side=bottom]:data-closed:slide-out-to-bottom-10 data-[side=left]:data-closed:slide-out-to-left-10 data-[side=right]:data-closed:slide-out-to-right-10 data-[side=top]:data-closed:slide-out-to-top-10",
+          "fixed z-50 flex flex-col overflow-y-auto overscroll-contain bg-background-elevated text-label shadow-2xl outline-none",
+          "inset-x-0 bottom-0 max-h-[calc(100dvh-env(safe-area-inset-top)-1.5rem)] rounded-t-[10px] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]",
+          "md:inset-x-auto md:top-1/2 md:bottom-auto md:left-1/2 md:max-h-[min(720px,calc(100dvh-4rem))] md:w-[540px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[10px] md:p-0",
+          "duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] data-open:animate-in data-closed:animate-out data-closed:duration-250",
+          "max-md:data-open:slide-in-from-bottom max-md:data-closed:slide-out-to-bottom md:data-open:fade-in-0 md:data-open:zoom-in-95 md:data-closed:fade-out-0 md:data-closed:zoom-out-95",
           className
         )}
         {...props}
       >
         {children}
-        {showCloseButton && (
-          <SheetPrimitive.Close data-slot="sheet-close" asChild>
-            <Button
-              variant="ghost"
-              className="absolute top-3 right-3"
-              size="icon-sm"
-            >
-              <XIcon
-              />
-              <span className="sr-only">Close</span>
-            </Button>
-          </SheetPrimitive.Close>
-        )}
       </SheetPrimitive.Content>
-    </SheetPortal>
+    </SheetPrimitive.Portal>
   )
 }
 
-function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="sheet-header"
-      className={cn("flex flex-col gap-0.5 p-4", className)}
-      {...props}
-    />
-  )
-}
-
-function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="sheet-footer"
-      className={cn("mt-auto flex flex-col gap-2 p-4", className)}
-      {...props}
-    />
-  )
-}
-
-function SheetTitle({
+// Barra de navegación del sheet: acción de cancelar a la izquierda, título
+// `Headline` centrado y acción de confirmación a la derecha. Queda fija al
+// scrollear el contenido, con material translúcido.
+function SheetNavBar({
+  title,
+  leading,
+  trailing,
   className,
-  ...props
-}: React.ComponentProps<typeof SheetPrimitive.Title>) {
+}: {
+  title: string
+  leading?: React.ReactNode
+  trailing?: React.ReactNode
+  className?: string
+}) {
   return (
-    <SheetPrimitive.Title
-      data-slot="sheet-title"
+    <div
+      data-slot="sheet-nav-bar"
       className={cn(
-        "font-heading text-base font-medium text-foreground",
+        "sticky top-0 z-10 grid min-h-14 shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1 bg-background-elevated/85 px-[calc(var(--layout-margin)-0.5rem)] shadow-[0_0.5px_0_var(--separator)] backdrop-blur-xl backdrop-saturate-150",
         className
       )}
-      {...props}
-    />
+    >
+      {/* Los botones nunca se recortan: si no entra todo, se trunca el título. */}
+      <div className="flex justify-start">{leading}</div>
+      <SheetPrimitive.Title className="min-w-0 truncate text-center text-headline text-label">
+        {title}
+      </SheetPrimitive.Title>
+      <div className="flex justify-end">{trailing}</div>
+    </div>
   )
 }
 
-function SheetDescription({
-  className,
-  ...props
-}: React.ComponentProps<typeof SheetPrimitive.Description>) {
+// Contenido del sheet: secciones agrupadas con el margen de layout.
+function SheetBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <SheetPrimitive.Description
-      data-slot="sheet-description"
-      className={cn("text-sm text-muted-foreground", className)}
+    <div
+      data-slot="sheet-body"
+      className={cn("flex flex-col gap-6 px-(--layout-margin) pt-5 pb-8", className)}
       {...props}
     />
   )
@@ -140,8 +120,6 @@ export {
   SheetTrigger,
   SheetClose,
   SheetContent,
-  SheetHeader,
-  SheetFooter,
-  SheetTitle,
-  SheetDescription,
+  SheetNavBar,
+  SheetBody,
 }

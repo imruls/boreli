@@ -12,7 +12,7 @@ import {
 import { getVolumeById, mapVolumeToDetail } from "@/lib/google-books";
 import { getUserBookByGoogleBooksId } from "@/lib/queries/user-books";
 import { BOOK_ID_MAX_LENGTH } from "@/lib/book-validation";
-import { BackButton } from "@/components/nav/back-button";
+import { PageHeader } from "@/components/nav/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BookDetailView } from "@/components/books/book-detail-view";
 
@@ -52,11 +52,8 @@ export async function generateMetadata({
 
 function ErrorState() {
   return (
-    <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-8">
-      <div className="flex items-center gap-3 px-4 pt-4 sm:px-6">
-        <BackButton />
-        <h1 className="font-heading text-lg font-bold text-ink">Libro</h1>
-      </div>
+    <div className="flex flex-1 flex-col gap-6">
+      <PageHeader title="Libro" back="history" />
       <EmptyState
         icon={WifiOff}
         title="No pudimos cargar este libro"

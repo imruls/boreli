@@ -21,8 +21,8 @@ export default function DashboardError({
   }, [error]);
 
   return (
-    <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-8">
-      <PageHeader title="Algo salió mal" showBack={false} />
+    <div className="flex flex-1 flex-col gap-6">
+      <PageHeader title="Algo salió mal" />
       <EmptyState
         icon={AlertTriangle}
         title="No pudimos cargar esta pantalla"

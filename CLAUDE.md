@@ -10,7 +10,7 @@ Mobile-first, con soporte desktop. Acceso 100% vía navegador con URL + login.
 - **`ROADMAP.md`** → plan de fases semanales con checklist. Referenciar explícitamente al arrancar una sesión (ej: *"Lee ROADMAP.md y arranquemos con la Semana 2"*).
 - **`data-model.md`** → esquema SQL completo + tipos TypeScript. Fuente de verdad del modelo de datos.
 - **`tech-stack.md`** → stack, variables de entorno, estructura de carpetas.
-- **`design-system.md`** → paleta, tipografía y logo de la marca Boreli (crema + oscuro cálido, sin acentos de color, sin ilustraciones en el MVP).
+- **`design-system.md`** → sistema de diseño basado en las Human Interface Guidelines de Apple (estilo iOS 17/18, sidebar tipo iPadOS en pantallas grandes) con la marca Boreli: roles de color en claro y oscuro derivados de crema + oscuro cálido, sin acentos de color, fuente del sistema, sin ilustraciones en el MVP.
 
 ## Stack
 - Next.js (App Router) + TypeScript
@@ -53,7 +53,7 @@ Ver `tech-stack.md` para el detalle de cada decisión.
 - Sincronización automática con Kindle/Apple Books (no existen APIs públicas — los tags son manuales)
 - Instalación como PWA
 - Historial/estadísticas de progreso de lectura a lo largo del tiempo (solo se guarda el valor actual)
-- Import de CSV, estadísticas, modo oscuro, reordenar manualmente "quiero leer" → todo esto es backlog post-MVP, ver `ROADMAP.md`
+- Import de CSV, estadísticas, reordenar manualmente "quiero leer" → todo esto es backlog post-MVP, ver `ROADMAP.md`
 
 ## Estructura
 Rutas en `/app`, componentes en `/components`, helpers en `/lib`, tipos en `/types`.
@@ -63,4 +63,4 @@ Detalle completo en `tech-stack.md`.
 - Componentes en PascalCase, archivos en kebab-case.
 - Tipado estricto: evitar `any`.
 - Usar los tipos de `types/book.ts` para todo lo relacionado a libros.
-- Seguir la paleta y tipografía de `design-system.md` en vez de inventar valores nuevos.
+- Seguir los tokens de color, la escala tipográfica y los patrones de componentes de `design-system.md` en vez de inventar valores nuevos. Todo color tiene variante clara y oscura: el modo lo elige el usuario en Perfil → Apariencia (Sistema/Claro/Oscuro, cookie `boreli-theme` → `data-theme` en `<html>`); para estilos por modo usar el variant `dark:`, nunca `@media (prefers-color-scheme)` directo.

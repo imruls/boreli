@@ -5,7 +5,7 @@ import { AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 
 // Boundary de errores para `/(auth)` (login, signup, forgot-password, reset-password).
-// Separado del de `/(dashboard)` porque este grupo no tiene AppHeader/BottomNav.
+// Separado del de `/(dashboard)` porque este grupo no tiene Sidebar/TabBar.
 export default function AuthError({
   error,
   reset,

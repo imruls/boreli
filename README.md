@@ -69,7 +69,7 @@ para agentes de código:
 - [`data-model.md`](./data-model.md) — esquema SQL completo + tipos TypeScript. Fuente de verdad
   del modelo de datos.
 - [`tech-stack.md`](./tech-stack.md) — stack, variables de entorno y estructura de carpetas.
-- [`design-system.md`](./design-system.md) — paleta, tipografía y logo de la marca Boreli.
+- [`design-system.md`](./design-system.md) — sistema de diseño (Human Interface Guidelines + marca Boreli, claro/oscuro).
 
 ## Estructura
 

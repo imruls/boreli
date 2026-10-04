@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { Lock, MailCheck } from "lucide-react";
+import { MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,13 +18,14 @@ export function ForgotPasswordForm({ linkExpired }: { linkExpired: boolean }) {
 
   if (state.success) {
     return (
-      <div className="flex w-full flex-col items-center gap-4 text-center">
-        <MailCheck className="size-8 text-ink" />
-        <p className="text-sm text-ink">
+      <div role="status" className="flex w-full flex-col items-center gap-2 text-center">
+        <MailCheck className="mb-2 size-12 text-label-secondary" strokeWidth={1.75} aria-hidden />
+        <h2 className="text-title-2 text-label">Revisá tu mail</h2>
+        <p className="text-body text-label-secondary">
           Si el email tiene una cuenta, te enviamos un link para elegir una nueva contraseña.
           Abrilo desde este mismo navegador.
         </p>
-        <Button asChild variant="outline" className="mt-2 w-full">
+        <Button asChild variant="secondary" size="lg" className="mt-4 w-full">
           <Link href="/login">Volver a iniciar sesión</Link>
         </Button>
       </div>
@@ -41,17 +42,16 @@ export function ForgotPasswordForm({ linkExpired }: { linkExpired: boolean }) {
         <Input id="email" name="email" type="email" autoComplete="email" required />
       </div>
       {error ? (
-        <div className="flex items-start gap-2 rounded-lg border border-ink-border bg-ink-border/30 px-3 py-2.5 text-sm text-ink">
-          <Lock className="mt-0.5 size-4 shrink-0 text-ink-muted" />
-          <p>{error}</p>
-        </div>
+        <p role="alert" className="px-4 text-footnote text-destructive">
+          {error}
+        </p>
       ) : null}
-      <Button type="submit" disabled={isPending} className="mt-2">
-        {isPending ? "Enviando..." : "Enviar link de recuperación"}
+      <Button type="submit" size="lg" pending={isPending} className="mt-2 w-full">
+        Enviar link de recuperación
       </Button>
-      <p className="text-center text-sm text-ink-muted">
+      <p className="text-center text-subheadline text-label-secondary">
         ¿Te acordaste?{" "}
-        <Link href="/login" className="font-medium text-ink underline underline-offset-4">
+        <Link href="/login" className="font-semibold text-tint underline underline-offset-4">
           Volver a iniciar sesión
         </Link>
       </p>

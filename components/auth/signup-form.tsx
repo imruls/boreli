@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { Lock, MailCheck } from "lucide-react";
+import { MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,15 +17,14 @@ export function SignupForm() {
 
   if (state.pendingConfirmation) {
     return (
-      <div className="flex w-full flex-col gap-4">
-        <div className="flex items-start gap-2 rounded-lg border border-ink-border bg-ink-border/30 px-3 py-2.5 text-sm text-ink">
-          <MailCheck className="mt-0.5 size-4 shrink-0 text-ink-muted" />
-          <p>
-            Te enviamos un mail para confirmar tu cuenta. Una vez confirmada, ingresá con tu
-            email y contraseña.
-          </p>
-        </div>
-        <Button asChild className="mt-2">
+      <div role="status" className="flex w-full flex-col items-center gap-2 text-center">
+        <MailCheck className="mb-2 size-12 text-label-secondary" strokeWidth={1.75} aria-hidden />
+        <h2 className="text-title-2 text-label">Revisá tu mail</h2>
+        <p className="text-body text-label-secondary">
+          Te enviamos un link para confirmar tu cuenta. Una vez confirmada, ingresá con tu email y
+          contraseña.
+        </p>
+        <Button asChild size="lg" className="mt-4 w-full">
           <Link href="/login">Ir a ingresar</Link>
         </Button>
       </div>
@@ -48,20 +47,19 @@ export function SignupForm() {
           maxLength={PASSWORD_MAX_LENGTH}
           required
         />
-        <p className="text-xs text-ink-muted">Mínimo {PASSWORD_MIN_LENGTH} caracteres.</p>
+        <p className="px-4 text-footnote text-label-secondary">Mínimo {PASSWORD_MIN_LENGTH} caracteres.</p>
       </div>
       {state.error ? (
-        <div className="flex items-start gap-2 rounded-lg border border-ink-border bg-ink-border/30 px-3 py-2.5 text-sm text-ink">
-          <Lock className="mt-0.5 size-4 shrink-0 text-ink-muted" />
-          <p>{state.error}</p>
-        </div>
+        <p role="alert" className="px-4 text-footnote text-destructive">
+          {state.error}
+        </p>
       ) : null}
-      <Button type="submit" disabled={isPending} className="mt-2">
-        {isPending ? "Creando cuenta..." : "Crear cuenta"}
+      <Button type="submit" size="lg" pending={isPending} className="mt-2 w-full">
+        Crear cuenta
       </Button>
-      <p className="text-center text-sm text-ink-muted">
+      <p className="text-center text-subheadline text-label-secondary">
         ¿Ya tenés cuenta?{" "}
-        <Link href="/login" className="font-medium text-ink underline underline-offset-4">
+        <Link href="/login" className="font-semibold text-tint underline underline-offset-4">
           Ingresá
         </Link>
       </p>

@@ -26,14 +26,16 @@ export function ProgressBar({
     <div className={cn("flex items-center gap-2", className)}>
       <div
         role="progressbar"
+        aria-label="Progreso de lectura"
+        aria-valuetext={label ?? undefined}
         aria-valuenow={percent}
         aria-valuemin={0}
         aria-valuemax={100}
-        className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-ink-border"
+        className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-fill"
       >
-        <div className="h-full rounded-full bg-ink" style={{ width: `${percent}%` }} />
+        <div className="h-full rounded-full bg-tint" style={{ width: `${percent}%` }} />
       </div>
-      {label ? <span className="shrink-0 text-xs text-ink-muted">{label}</span> : null}
+      {label ? <span className="shrink-0 text-footnote text-label-secondary">{label}</span> : null}
     </div>
   );
 }

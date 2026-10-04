@@ -18,8 +18,8 @@ export default async function ForgotPasswordPage({
       <div className="flex flex-col items-center gap-3 text-center">
         <LogoMark />
         <div className="flex flex-col gap-1">
-          <h1 className="font-heading text-2xl font-bold text-ink">Recuperar contraseña</h1>
-          <p className="text-sm text-ink-muted">
+          <h1 className="text-title-1 text-label">Recuperar contraseña</h1>
+          <p className="text-body text-label-secondary">
             Te enviamos un link por mail para elegir una nueva contraseña.
           </p>
         </div>

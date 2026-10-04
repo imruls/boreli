@@ -26,7 +26,6 @@ export function TagFilterSelect({
     <Select value={value} onValueChange={(next) => onChange(next as TagFilterValue)}>
       <SelectTrigger
         size="sm"
-        className="border-ink-border bg-cream text-xs font-semibold text-ink-muted"
         aria-label="Filtrar por formato"
       >
         <SelectValue />

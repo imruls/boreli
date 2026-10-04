@@ -1,6 +1,7 @@
 "use client";
 
 import { UserBookCard } from "@/components/books/user-book-card";
+import { BookList } from "@/components/books/book-card";
 import { ConfirmationBanner, useConfirmationBanner } from "@/components/ui/confirmation-banner";
 import type { UserBook } from "@/types/book";
 
@@ -20,10 +21,10 @@ export function ReadingSection({ books }: { books: UserBook[] }) {
 
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="text-sm font-semibold text-ink">Leyendo actualmente</h2>
+      <h2 className="text-title-3 text-label">Leyendo actualmente</h2>
       <ConfirmationBanner message={confirmation} />
       {books.length > 0 ? (
-        <div className="flex flex-col gap-2.5">
+        <BookList>
           {books.map((userBook) => (
             <UserBookCard
               key={userBook.id}
@@ -31,7 +32,7 @@ export function ReadingSection({ books }: { books: UserBook[] }) {
               onDeleted={(title) => showConfirmation(`"${title}" eliminado de tu biblioteca`)}
             />
           ))}
-        </div>
+        </BookList>
       ) : null}
     </section>
   );

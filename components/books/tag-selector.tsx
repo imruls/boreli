@@ -1,11 +1,14 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { BOOK_TAGS, BOOK_TAG_LABELS } from "@/lib/book-tags";
 import type { BookTag } from "@/types/book";
 
+// Chip seleccionable (ver design-system.md → "Chips de formato"): cápsula
+// `fill`; seleccionado, cápsula `tint` con check.
 const CHIP_CLASS =
-  "rounded-full border border-ink-border px-3.5 text-xs font-semibold text-ink-muted data-[state=on]:border-ink data-[state=on]:bg-ink data-[state=on]:text-cream";
+  "group/chip h-[34px] gap-1 rounded-full bg-fill px-3.5 text-subheadline text-label hover:bg-fill active:opacity-70 data-[state=on]:bg-tint data-[state=on]:font-semibold data-[state=on]:text-on-tint focus-visible:ring-2 focus-visible:ring-tint focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 // Multi-select: a diferencia de `tag-filter-select.tsx` (selección única para
 // filtrar listas), un libro puede tener varios tags de formato a la vez
@@ -26,6 +29,7 @@ export function TagSelector({
     >
       {BOOK_TAGS.map((tag) => (
         <ToggleGroupItem key={tag} value={tag} className={CHIP_CLASS}>
+          <Check className="hidden size-3.5 group-data-[state=on]/chip:block" strokeWidth={3} aria-hidden />
           {BOOK_TAG_LABELS[tag]}
         </ToggleGroupItem>
       ))}

@@ -2,62 +2,72 @@
 
 import { useActionState, useState } from "react";
 import { Trash2 } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { Sheet, SheetBody, SheetContent, SheetNavBar } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { ListItem, ListRow, ListSection } from "@/components/ui/list";
 import { PasswordInput } from "@/components/ui/password-input";
 import { deleteAccount, type DeleteAccountState } from "@/app/(dashboard)/perfil/actions";
 
 const initialState: DeleteAccountState = { error: null };
 
+// Fila destructiva "Eliminar cuenta" (va dentro de una `ListSection`) que abre
+// un sheet pidiendo la contraseña actual para confirmar.
 export function DeleteAccountSheet() {
   const [open, setOpen] = useState(false);
   const [state, formAction, isPending] = useActionState(deleteAccount, initialState);
 
   return (
-    <Sheet open={open} onOpenChange={isPending ? undefined : setOpen}>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-3 py-3 text-left text-sm font-medium text-destructive"
-      >
-        <Trash2 className="size-4" />
-        Eliminar cuenta
-      </button>
+    <>
+      <ListRow icon={Trash2} label="Eliminar cuenta" destructive onClick={() => setOpen(true)} />
 
-      <SheetContent side="bottom" className="rounded-t-2xl border-ink-border">
-        <SheetHeader>
-          <SheetTitle className="text-xs font-bold tracking-wide text-ink-muted uppercase">
-            Eliminar cuenta
-          </SheetTitle>
-          <p className="text-sm text-ink-muted">
-            Esta acción no se puede deshacer: se borra tu biblioteca completa y tu cuenta.
-          </p>
-        </SheetHeader>
-
-        <form action={formAction} className="flex flex-col gap-4 px-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="password">Tu contraseña</Label>
-            <PasswordInput id="password" name="password" autoComplete="current-password" required />
-          </div>
-          {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
-
-          <SheetFooter className="px-0">
-            <Button type="submit" variant="destructive" disabled={isPending}>
-              {isPending ? "Eliminando…" : "Eliminar cuenta definitivamente"}
-            </Button>
-            <Button type="button" variant="outline" disabled={isPending} onClick={() => setOpen(false)}>
-              Cancelar
-            </Button>
-          </SheetFooter>
-        </form>
-      </SheetContent>
-    </Sheet>
+      <Sheet open={open} onOpenChange={isPending ? undefined : setOpen}>
+        <SheetContent>
+          <SheetNavBar
+            title="Eliminar cuenta"
+            leading={
+              <Button
+                variant="ghost"
+                className="font-normal"
+                disabled={isPending}
+                onClick={() => setOpen(false)}
+              >
+                Cancelar
+              </Button>
+            }
+            trailing={
+              <Button variant="destructive" type="submit" form="delete-account-form" pending={isPending}>
+                Eliminar
+              </Button>
+            }
+          />
+          <SheetBody>
+            <form id="delete-account-form" action={formAction}>
+              <ListSection
+                header="Confirmá con tu contraseña"
+                footer={
+                  state.error ? (
+                    <span className="text-destructive">{state.error}</span>
+                  ) : (
+                    "Esta acción no se puede deshacer: se borra tu biblioteca completa y tu cuenta."
+                  )
+                }
+              >
+                <ListItem className="py-0">
+                  <PasswordInput
+                    id="password"
+                    name="password"
+                    autoComplete="current-password"
+                    placeholder="Contraseña"
+                    aria-label="Contraseña"
+                    required
+                    className="rounded-none bg-transparent px-0 focus-visible:ring-0"
+                  />
+                </ListItem>
+              </ListSection>
+            </form>
+          </SheetBody>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

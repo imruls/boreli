@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Search as SearchIcon, X, Plus, WifiOff } from "lucide-react";
+import { Search as SearchIcon, Plus, WifiOff } from "lucide-react";
 import { PageHeader } from "@/components/nav/page-header";
-import { Input } from "@/components/ui/input";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { BookCard } from "@/components/books/book-card";
+import { Button } from "@/components/ui/button";
+import { SearchField } from "@/components/ui/search-field";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { BookCard, BookList } from "@/components/books/book-card";
 import { BookListSkeleton } from "@/components/books/book-list-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AddToLibrarySheet } from "@/components/books/add-to-library-sheet";
@@ -125,79 +126,42 @@ export default function BuscarPage() {
   const isError = searchStatus === "error";
 
   return (
-    <div className="flex flex-1 flex-col gap-4 pb-24 md:pb-8">
-      <PageHeader title="Buscar" showBack={false} />
+    <div className="flex flex-1 flex-col gap-4">
+      <PageHeader title="Buscar" />
 
-      <ConfirmationBanner message={confirmation} className="mx-4 sm:mx-6" />
+      <ConfirmationBanner message={confirmation} />
 
-      {saveError ? (
-        <div className="mx-4 flex items-center justify-between gap-2 rounded-xl border border-ink-border px-3.5 py-2.5 text-sm text-ink sm:mx-6">
-          {saveError}
-          <button
-            type="button"
-            onClick={() => setSaveError(null)}
-            aria-label="Cerrar aviso"
-            className="shrink-0 text-ink-muted"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-      ) : null}
+      <div className="flex flex-col gap-3 px-(--layout-margin)">
+        <SearchField
+          value={query}
+          onValueChange={(next) => (next ? setQuery(next) : handleClearSearch())}
+          placeholder="Buscar libros, autores"
+        />
 
-      <div className="flex flex-col gap-3 px-4 sm:px-6">
-        <div className="relative">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-muted" />
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar libros, autores…"
-            className="h-11 rounded-xl pl-9 pr-9"
-          />
-          {query ? (
-            <button
-              type="button"
-              onClick={handleClearSearch}
-              aria-label="Limpiar búsqueda"
-              className="absolute top-1/2 right-3 -translate-y-1/2 text-ink-muted"
-            >
-              <X className="size-4" />
-            </button>
-          ) : null}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIsManualFormOpen(true)}
-          className="self-start text-xs font-medium text-ink-muted underline underline-offset-4"
-        >
-          ¿No lo encontrás? Cargalo a mano
-        </button>
-
-        <ToggleGroup
-          type="single"
+        <SegmentedControl
+          aria-label="Buscar en"
           value={category}
-          onValueChange={(value) => value && setCategory(value as BookSearchField)}
-          className="flex-nowrap gap-2 overflow-x-auto pb-1"
-        >
-          {CATEGORIES.map(({ label, value }) => (
-            <ToggleGroupItem
-              key={value}
-              value={value}
-              className="rounded-full border border-ink-border px-3.5 text-xs font-semibold text-ink-muted data-[state=on]:border-ink data-[state=on]:bg-ink data-[state=on]:text-cream"
-            >
-              {label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+          onValueChange={setCategory}
+          options={CATEGORIES}
+        />
+
+        {saveError ? (
+          <p role="alert" className="text-footnote text-destructive">
+            {saveError}
+          </p>
+        ) : null}
       </div>
 
-      <div className="flex-1 px-4 sm:px-6">
+      <div className="flex-1 px-(--layout-margin)">
         {!trimmedQuery ? (
-          <EmptyState
-            icon={SearchIcon}
-            title="Buscá tu próximo libro"
-            description="Escribí un título o autor para ver resultados de Google Books."
-          />
+          <div className="flex flex-col">
+            <EmptyState
+              icon={SearchIcon}
+              title="Buscá tu próximo libro"
+              description="Escribí un título o autor para ver resultados de Google Books."
+            />
+            <ManualEntryLink onClick={() => setIsManualFormOpen(true)} />
+          </div>
         ) : isLoading ? (
           <BookListSkeleton rows={3} />
         ) : isError ? (
@@ -215,7 +179,8 @@ export default function BuscarPage() {
             action={{ label: "Cargar a mano", onClick: () => setIsManualFormOpen(true) }}
           />
         ) : (
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-3">
+          <BookList>
             {results.map((book) => (
               <BookCard
                 key={book.id}
@@ -229,20 +194,23 @@ export default function BuscarPage() {
                     : undefined
                 }
                 action={
-                  <button
-                    type="button"
+                  <Button
+                    variant="tinted"
+                    size="icon-sm"
                     onClick={(event) => {
                       event.stopPropagation();
                       setSelectedBook(book);
                     }}
                     aria-label={`Agregar ${book.title}`}
-                    className="flex size-8 items-center justify-center rounded-full bg-ink text-cream"
+                    className="mr-2"
                   >
-                    <Plus className="size-4" />
-                  </button>
+                    <Plus className="size-5" strokeWidth={2.5} />
+                  </Button>
                 }
               />
             ))}
+          </BookList>
+          <ManualEntryLink onClick={() => setIsManualFormOpen(true)} />
           </div>
         )}
       </div>
@@ -262,5 +230,14 @@ export default function BuscarPage() {
         isSaving={isSaving}
       />
     </div>
+  );
+}
+
+// Acceso a la carga manual, como botón plain centrado debajo del contenido.
+function ManualEntryLink({ onClick }: { onClick: () => void }) {
+  return (
+    <Button variant="ghost" size="sm" onClick={onClick} className="self-center">
+      ¿No lo encontrás? Cargalo a mano
+    </Button>
   );
 }

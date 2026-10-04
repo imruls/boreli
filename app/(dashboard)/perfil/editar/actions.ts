@@ -81,8 +81,8 @@ export async function updateProfile(
 
   revalidatePath("/perfil");
   revalidatePath("/perfil/editar");
-  // El avatar también se muestra en AppHeader, que vive en el layout
-  // compartido de todo `(dashboard)` — sin esto, el navbar seguiría
+  // El avatar también se muestra en el Sidebar, que vive en el layout
+  // compartido de todo `(dashboard)` — sin esto, el sidebar seguiría
   // mostrando la foto/inicial vieja al navegar a otra pantalla hasta que
   // el Router Cache de esa ruta expire por su cuenta.
   revalidatePath("/", "layout");

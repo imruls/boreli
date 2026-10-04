@@ -2,30 +2,22 @@
 
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { Sheet, SheetBody, SheetContent, SheetNavBar } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { ListItem, ListRow, ListSection } from "@/components/ui/list";
+import { ActionSheet } from "@/components/ui/action-sheet";
 import { RatingInput } from "@/components/books/rating-input";
 import { NoteInput } from "@/components/books/note-input";
 import { TagSelector } from "@/components/books/tag-selector";
+import { StatusPicker } from "@/components/books/status-picker";
 import { ProgressInput, type ProgressValue } from "@/components/books/progress-input";
-import { BOOK_STATUS_OPTIONS as OPTIONS } from "@/lib/book-status";
-import { cn } from "@/lib/utils";
 import type { BookStatus, BookTag, ProgressType } from "@/types/book";
 
-// Sheet único de edición de una card ya en la biblioteca: reemplaza al viejo
-// `ChangeStatusSheet` (solo status) y suma tags, rating (también para
-// corregirlo o completarlo si el libro quedó "leído" sin puntuar) y borrado.
-// El borrado no abre un modal separado (no hay `AlertDialog` en el repo):
-// pisa el contenido del sheet con un paso de confirmación inline, mismo
-// patrón de estado intermedio que ya usaba `ChangeStatusSheet` para el
-// rating. El padre debe pasar una `key` distinta por libro (ej.
+// Sheet único de edición de una card ya en la biblioteca: estado, tags,
+// progreso (si está "leyendo"), rating y reseña (si está "leído", también
+// para corregirlo o completarlo) y borrado. El borrado se confirma con un
+// action sheet destructivo (ver design-system.md → "Confirmaciones
+// destructivas"). El padre debe pasar una `key` distinta por libro (ej.
 // `key={userBook.id}`) para que este estado se reinicie al cambiar de libro.
 export function EditBookSheet({
   open,
@@ -107,149 +99,94 @@ export function EditBookSheet({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl border-ink-border">
-        {confirmingDelete ? (
-          <>
-            <SheetHeader>
-              <SheetTitle className="text-xs font-bold tracking-wide text-ink-muted uppercase">
-                Eliminar libro
-              </SheetTitle>
-              {bookTitle ? <p className="text-sm font-medium text-ink">{bookTitle}</p> : null}
-            </SheetHeader>
+      <SheetContent>
+        <SheetNavBar
+          title="Editar libro"
+          leading={
+            <Button
+              variant="ghost"
+              className="font-normal"
+              disabled={isBusy}
+              onClick={() => handleOpenChange(false)}
+            >
+              Cancelar
+            </Button>
+          }
+          trailing={
+            <Button
+              variant="ghost"
+              disabled={!canSave || isDeleting}
+              pending={isSaving}
+              onClick={handleSave}
+            >
+              Guardar
+            </Button>
+          }
+        />
+        <SheetBody>
+          {bookTitle ? (
+            <p className="text-center text-subheadline text-label-secondary">{bookTitle}</p>
+          ) : null}
 
-            <div className="flex flex-col gap-2 px-4">
-              <p className="text-sm text-ink-muted">
-                ¿Eliminar este libro de tu biblioteca? Esta acción no se puede deshacer.
-              </p>
-              {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            </div>
+          <StatusPicker
+            value={selectedStatus}
+            onChange={setSelectedStatus}
+            currentStatus={currentStatus}
+            disabled={isBusy}
+          />
 
-            <SheetFooter>
-              <Button variant="destructive" disabled={isDeleting} onClick={() => onDelete?.()}>
-                {isDeleting ? "Eliminando…" : "Eliminar"}
-              </Button>
-              <Button
-                variant="outline"
-                disabled={isDeleting}
-                onClick={() => setConfirmingDelete(false)}
-              >
-                Cancelar
-              </Button>
-            </SheetFooter>
-          </>
-        ) : (
-          <>
-            <SheetHeader>
-              <SheetTitle className="text-xs font-bold tracking-wide text-ink-muted uppercase">
-                Editar libro
-              </SheetTitle>
-              {bookTitle ? <p className="text-sm font-medium text-ink">{bookTitle}</p> : null}
-            </SheetHeader>
+          <ListSection header="Formato">
+            <ListItem>
+              <TagSelector value={tags} onChange={setTags} />
+            </ListItem>
+          </ListSection>
 
-            <div className="flex flex-col gap-4 overflow-y-auto px-4">
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-ink-muted">Estado</span>
-                <div className="flex flex-col gap-1">
-                  {OPTIONS.map(({ status, label, icon: Icon }) => {
-                    const isSelected = selectedStatus === status;
-                    return (
-                      <button
-                        key={status}
-                        type="button"
-                        disabled={isBusy}
-                        onClick={() => setSelectedStatus(status)}
-                        aria-pressed={isSelected}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm font-medium text-ink disabled:opacity-50",
-                          isSelected ? "bg-ink-border/40" : "hover:bg-ink-border/20",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "flex size-9 shrink-0 items-center justify-center rounded-lg border bg-cream",
-                            isSelected ? "border-ink" : "border-ink-border",
-                          )}
-                        >
-                          <Icon className="size-4 text-ink" />
-                        </span>
-                        {label}
-                        {status === currentStatus ? (
-                          <span className="ml-auto text-xs font-normal text-ink-muted">Actual</span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+          {showsProgress ? (
+            <ListSection header="Progreso de lectura (opcional)">
+              <ListItem>
+                <ProgressInput value={progress} onChange={setProgress} bookPageCount={bookPageCount} />
+              </ListItem>
+            </ListSection>
+          ) : null}
 
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-ink-muted">Formato</span>
-                <TagSelector value={tags} onChange={setTags} />
-              </div>
+          {needsRating ? (
+            <ListSection
+              header="Tu opinión"
+              footer="La calificación es obligatoria para marcar el libro como leído."
+            >
+              <ListItem className="py-1">
+                <RatingInput value={rating} onChange={setRating} className="-mx-2" />
+              </ListItem>
+              <ListItem>
+                <NoteInput
+                  value={note}
+                  onChange={setNote}
+                  textareaClassName="min-h-20 bg-transparent px-0 py-1 focus-visible:ring-0"
+                />
+              </ListItem>
+            </ListSection>
+          ) : null}
 
-              {showsProgress ? (
-                <>
-                  <Separator />
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold text-ink-muted">
-                      Progreso de lectura (opcional)
-                    </span>
-                    <ProgressInput
-                      value={progress}
-                      onChange={setProgress}
-                      bookPageCount={bookPageCount}
-                    />
-                  </div>
-                </>
-              ) : null}
+          {error ? <p className="px-4 text-footnote text-destructive">{error}</p> : null}
 
-              {needsRating ? (
-                <>
-                  <Separator />
-                  <div className="flex flex-col gap-3 rounded-lg border border-ink-border px-3 py-3">
-                    <span className="text-xs font-bold tracking-wide text-ink uppercase">
-                      Tu opinión
-                    </span>
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-xs font-semibold text-ink-muted">
-                        Calificación (obligatoria para marcar como leído)
-                      </span>
-                      <RatingInput value={rating} onChange={setRating} />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-xs font-semibold text-ink-muted">Reseña (opcional)</span>
-                      <NoteInput value={note} onChange={setNote} />
-                    </div>
-                  </div>
-                </>
-              ) : null}
+          <ListSection>
+            <ListRow
+              icon={Trash2}
+              label={isDeleting ? "Eliminando…" : "Eliminar libro"}
+              destructive
+              disabled={isBusy}
+              onClick={() => setConfirmingDelete(true)}
+            />
+          </ListSection>
+        </SheetBody>
 
-              {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
-              <Separator />
-
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={isBusy}
-                onClick={() => setConfirmingDelete(true)}
-                className="justify-start"
-              >
-                <Trash2 />
-                Eliminar libro
-              </Button>
-            </div>
-
-            <SheetFooter>
-              <Button disabled={!canSave || isBusy} onClick={handleSave}>
-                {isSaving ? "Guardando…" : "Guardar"}
-              </Button>
-              <Button variant="outline" disabled={isBusy} onClick={() => handleOpenChange(false)}>
-                Cancelar
-              </Button>
-            </SheetFooter>
-          </>
-        )}
+        <ActionSheet
+          open={confirmingDelete}
+          onOpenChange={setConfirmingDelete}
+          title="¿Eliminar este libro de tu biblioteca?"
+          message="Esta acción no se puede deshacer."
+          actions={[{ label: "Eliminar libro", destructive: true, onSelect: () => onDelete?.() }]}
+        />
       </SheetContent>
     </Sheet>
   );

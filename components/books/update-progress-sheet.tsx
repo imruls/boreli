@@ -1,14 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { Sheet, SheetBody, SheetContent, SheetNavBar } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { ListItem, ListSection } from "@/components/ui/list";
 import { ProgressInput, type ProgressValue } from "@/components/books/progress-input";
 
 // Sheet liviano para el acceso rápido de "Actualizar progreso" en la card de
@@ -50,27 +45,40 @@ export function UpdateProgressSheet({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl border-ink-border">
-        <SheetHeader>
-          <SheetTitle className="text-xs font-bold tracking-wide text-ink-muted uppercase">
-            Actualizar progreso
-          </SheetTitle>
-          {bookTitle ? <p className="text-sm font-medium text-ink">{bookTitle}</p> : null}
-        </SheetHeader>
-
-        <div className="flex flex-col gap-4 px-4">
-          <ProgressInput value={value} onChange={setValue} bookPageCount={bookPageCount} />
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        </div>
-
-        <SheetFooter>
-          <Button disabled={!canSave || isSaving} onClick={() => onSave?.(value)}>
-            {isSaving ? "Guardando…" : "Guardar"}
-          </Button>
-          <Button variant="outline" disabled={isSaving} onClick={() => handleOpenChange(false)}>
-            Cancelar
-          </Button>
-        </SheetFooter>
+      <SheetContent>
+        <SheetNavBar
+          title="Progreso"
+          leading={
+            <Button
+              variant="ghost"
+              className="font-normal"
+              disabled={isSaving}
+              onClick={() => handleOpenChange(false)}
+            >
+              Cancelar
+            </Button>
+          }
+          trailing={
+            <Button
+              variant="ghost"
+              disabled={!canSave}
+              pending={isSaving}
+              onClick={() => onSave?.(value)}
+            >
+              Guardar
+            </Button>
+          }
+        />
+        <SheetBody>
+          {bookTitle ? (
+            <p className="text-center text-subheadline text-label-secondary">{bookTitle}</p>
+          ) : null}
+          <ListSection footer={error ? <span className="text-destructive">{error}</span> : undefined}>
+            <ListItem>
+              <ProgressInput value={value} onChange={setValue} bookPageCount={bookPageCount} />
+            </ListItem>
+          </ListSection>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );

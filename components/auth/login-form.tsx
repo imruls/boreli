@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +23,7 @@ export function LoginForm() {
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Contraseña</Label>
-          <Link href="/forgot-password" className="text-xs text-ink-muted underline underline-offset-4">
+          <Link href="/forgot-password" className="pr-4 text-footnote font-semibold text-tint">
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
@@ -37,17 +36,16 @@ export function LoginForm() {
         />
       </div>
       {state.error ? (
-        <div className="flex items-start gap-2 rounded-lg border border-ink-border bg-ink-border/30 px-3 py-2.5 text-sm text-ink">
-          <Lock className="mt-0.5 size-4 shrink-0 text-ink-muted" />
-          <p>{state.error}</p>
-        </div>
+        <p role="alert" className="px-4 text-footnote text-destructive">
+          {state.error}
+        </p>
       ) : null}
-      <Button type="submit" disabled={isPending} className="mt-2">
-        {isPending ? "Ingresando..." : "Iniciar sesión"}
+      <Button type="submit" size="lg" pending={isPending} className="mt-2 w-full">
+        Iniciar sesión
       </Button>
-      <p className="text-center text-sm text-ink-muted">
+      <p className="text-center text-subheadline text-label-secondary">
         ¿No tenés cuenta?{" "}
-        <Link href="/signup" className="font-medium text-ink underline underline-offset-4">
+        <Link href="/signup" className="font-semibold text-tint underline underline-offset-4">
           Creá una
         </Link>
       </p>

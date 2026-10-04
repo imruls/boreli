@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { Sheet, SheetBody, SheetContent, SheetNavBar } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { ListItem, ListSection } from "@/components/ui/list";
 import { isHttpUrl, normalizeHttpUrl } from "@/lib/utils";
 import {
   BOOK_AUTHOR_MAX_LENGTH,
@@ -13,6 +13,9 @@ import {
   BOOK_TITLE_MAX_LENGTH,
 } from "@/lib/book-validation";
 import type { Book } from "@/types/book";
+
+// Campo dentro de una fila de lista agrupada: la fila ya es el fondo.
+const FIELD_CLASS = "rounded-none bg-transparent px-0 focus-visible:ring-0";
 
 // Carga manual para cuando la búsqueda en Google Books no encuentra el
 // libro (ver tabla de campos en data-model.md): título y autor obligatorios,
@@ -84,75 +87,84 @@ export function ManualBookForm({
         onOpenChange(next);
       }}
     >
-      <SheetContent side="bottom" className="rounded-t-2xl border-ink-border">
-        <SheetHeader>
-          <SheetTitle className="text-xs font-bold tracking-wide text-ink-muted uppercase">
-            Cargar libro a mano
-          </SheetTitle>
-          <p className="text-sm text-ink-muted">Para cuando no lo encontrás en la búsqueda.</p>
-        </SheetHeader>
+      <SheetContent>
+        <SheetNavBar
+          title="Cargar libro"
+          leading={
+            <Button variant="ghost" className="font-normal" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+          }
+          trailing={
+            <Button variant="ghost" type="submit" form="manual-book-form">
+              Continuar
+            </Button>
+          }
+        />
+        <SheetBody>
+          {/* Formulario agrupado de iOS: cada campo es una fila, sin label
+              visible; el placeholder y el aria-label nombran el campo. */}
+          <form id="manual-book-form" onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <ListSection
+              footer={
+                error ? (
+                  <span className="text-destructive">{error}</span>
+                ) : (
+                  "Para cuando no lo encontrás en la búsqueda. Título y autor son obligatorios."
+                )
+              }
+            >
+              <ListItem className="py-0">
+                <Input
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  maxLength={BOOK_TITLE_MAX_LENGTH}
+                  placeholder="Título"
+                  aria-label="Título"
+                  className={FIELD_CLASS}
+                />
+              </ListItem>
+              <ListItem className="py-0">
+                <Input
+                  value={authors}
+                  onChange={(event) => setAuthors(event.target.value)}
+                  maxLength={BOOK_AUTHOR_MAX_LENGTH}
+                  placeholder="Autor/es (separados por coma)"
+                  aria-label="Autor/es"
+                  className={FIELD_CLASS}
+                />
+              </ListItem>
+            </ListSection>
 
-        <form id="manual-book-form" onSubmit={handleSubmit} className="flex flex-col gap-4 px-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="manual-title">Título</Label>
-            <Input
-              id="manual-title"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              maxLength={BOOK_TITLE_MAX_LENGTH}
-              placeholder="Título del libro"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="manual-authors">Autor/es</Label>
-            <Input
-              id="manual-authors"
-              value={authors}
-              onChange={(event) => setAuthors(event.target.value)}
-              maxLength={BOOK_AUTHOR_MAX_LENGTH}
-              placeholder="Separá con coma si son varios"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="manual-cover">Portada (URL, opcional)</Label>
-            <Input
-              id="manual-cover"
-              type="url"
-              value={coverUrl}
-              onChange={(event) => setCoverUrl(event.target.value)}
-              onBlur={(event) => setCoverUrl(normalizeHttpUrl(event.target.value))}
-              maxLength={BOOK_COVER_URL_MAX_LENGTH}
-              placeholder="https://…"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="manual-pages">Páginas (opcional)</Label>
-            <Input
-              id="manual-pages"
-              type="number"
-              min={1}
-              max={BOOK_PAGE_COUNT_MAX}
-              inputMode="numeric"
-              value={pageCount}
-              onChange={(event) => setPageCount(event.target.value)}
-              placeholder="Cantidad de páginas"
-            />
-          </div>
-
-          {error ? <p className="text-sm text-ink-muted">{error}</p> : null}
-        </form>
-
-        <SheetFooter>
-          <Button type="submit" form="manual-book-form">
-            Continuar
-          </Button>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-        </SheetFooter>
+            <ListSection header="Opcional">
+              <ListItem className="py-0">
+                <Input
+                  type="url"
+                  value={coverUrl}
+                  onChange={(event) => setCoverUrl(event.target.value)}
+                  onBlur={(event) => setCoverUrl(normalizeHttpUrl(event.target.value))}
+                  maxLength={BOOK_COVER_URL_MAX_LENGTH}
+                  placeholder="URL de la portada"
+                  aria-label="URL de la portada"
+                  className={FIELD_CLASS}
+                />
+              </ListItem>
+              <ListItem className="py-0">
+                <Input
+                  type="number"
+                  min={1}
+                  max={BOOK_PAGE_COUNT_MAX}
+                  inputMode="numeric"
+                  value={pageCount}
+                  onChange={(event) => setPageCount(event.target.value)}
+                  placeholder="Cantidad de páginas"
+                  aria-label="Cantidad de páginas"
+                  className={FIELD_CLASS}
+                />
+              </ListItem>
+            </ListSection>
+          </form>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );

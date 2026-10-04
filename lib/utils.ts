@@ -1,5 +1,33 @@
 import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { extendTailwindMerge } from "tailwind-merge"
+
+// La escala tipográfica de HIG (`text-body`, `text-headline`, … en
+// app/globals.css) y los roles de color (`text-label`, `bg-fill`, …) son
+// nombres custom: sin registrarlos, tailwind-merge confunde `text-body` con
+// un color y lo descarta cuando aparece `text-label` en la misma lista.
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        {
+          text: [
+            "large-title",
+            "title-1",
+            "title-2",
+            "title-3",
+            "headline",
+            "body",
+            "callout",
+            "subheadline",
+            "footnote",
+            "caption-1",
+            "caption-2",
+          ],
+        },
+      ],
+    },
+  },
+})
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

@@ -20,10 +20,10 @@ export default async function EditarPerfilPage() {
     typeof user?.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null;
 
   return (
-    <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-8">
-      <PageHeader title="Editar perfil" backHref="/perfil" />
+    <div className="flex flex-1 flex-col gap-4">
+      <PageHeader title="Editar perfil" back={{ href: "/perfil", label: "Perfil" }} />
 
-      <div className="flex flex-col gap-4 px-4 sm:px-6">
+      <div className="flex flex-col px-(--layout-margin) pt-2">
         <ProfileForm email={email} displayName={displayName} avatarUrl={avatarUrl} />
       </div>
     </div>

@@ -30,8 +30,8 @@ export default async function EstadisticasPage() {
 
   if (readBooks.length === 0) {
     return (
-      <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-8">
-        <PageHeader title="Estadísticas" backHref="/perfil" />
+      <div className="flex flex-1 flex-col gap-4">
+        <PageHeader title="Estadísticas" back={{ href: "/perfil", label: "Perfil" }} />
         <EmptyState
           icon={BarChart3}
           title="Todavía no hay libros leídos"
@@ -49,10 +49,10 @@ export default async function EstadisticasPage() {
   const ratingDistribution = getRatingDistribution(readBooks);
 
   return (
-    <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-8">
-      <PageHeader title="Estadísticas" backHref="/perfil" />
+    <div className="flex flex-1 flex-col gap-4">
+      <PageHeader title="Estadísticas" back={{ href: "/perfil", label: "Perfil" }} />
 
-      <div className="flex flex-col gap-4 px-4 sm:px-6">
+      <div className="flex flex-col gap-6 px-(--layout-margin)">
         <TrendChartCard
           title="Libros leídos"
           valueLabel="libros"
@@ -71,6 +71,7 @@ export default async function EstadisticasPage() {
           <MonochromeBarChart
             data={tagDistribution.map((point) => ({ label: point.label, value: point.count }))}
             valueLabel="libros"
+            orientation="horizontal"
           />
         </StatSection>
 

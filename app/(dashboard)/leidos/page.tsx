@@ -21,9 +21,9 @@ export default async function LeidosPage() {
   const books = await getUserBooksByStatus(supabase, user.id, "read");
 
   return (
-    <div className="flex flex-1 flex-col gap-4 pb-24 md:pb-8">
-      <PageHeader title="Leídos" />
-      <div className="flex flex-1 flex-col px-4 sm:px-6">
+    <div className="flex flex-1 flex-col gap-4">
+      <PageHeader title="Leídos" back={{ href: "/", label: "Inicio" }} />
+      <div className="flex flex-1 flex-col px-(--layout-margin)">
         <BookListWithFilter
           items={books}
           showRating

@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { BarChart3, ChevronRight, Pencil, LogOut } from "lucide-react";
+import { cookies } from "next/headers";
+import { BarChart3, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { logout } from "@/app/(dashboard)/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+import { ListRow, ListSection } from "@/components/ui/list";
 import { PageHeader } from "@/components/nav/page-header";
 import { ExportLibraryButton } from "@/components/export-library-button";
 import { DeleteAccountSheet } from "@/components/auth/delete-account-sheet";
+import { LogoutRow } from "@/components/auth/logout-row";
+import { AppearancePicker } from "@/components/auth/appearance-picker";
+import { THEME_COOKIE, parseThemePreference } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: "Perfil — Boreli",
 };
 
+// Pantalla tipo Ajustes de iOS: encabezado con avatar y secciones agrupadas;
+// las acciones de cuenta (cerrar sesión, eliminar) van al final, en rojo.
 export default async function PerfilPage() {
   const supabase = await createClient();
   const {
@@ -27,53 +31,42 @@ export default async function PerfilPage() {
   const avatarUrl =
     typeof user?.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null;
   const initial = (displayName ?? email).charAt(0).toUpperCase() || "?";
+  const theme = parseThemePreference((await cookies()).get(THEME_COOKIE)?.value);
 
   return (
-    <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-8">
-      <PageHeader title="Perfil" showBack={false} />
+    <div className="flex flex-1 flex-col gap-4">
+      <PageHeader title="Perfil" />
 
-      <div className="flex flex-col items-center gap-2 px-4 sm:px-6">
-        <Avatar size="lg">
-          {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
-          <AvatarFallback className="bg-ink-border text-base text-ink">{initial}</AvatarFallback>
-        </Avatar>
-        {displayName ? <p className="text-sm font-medium text-ink">{displayName}</p> : null}
-        <p className="text-sm text-ink-muted">{email}</p>
-      </div>
+      <div className="flex flex-col gap-8 px-(--layout-margin)">
+        <div className="flex flex-col items-center gap-1 text-center">
+          <Avatar className="mb-2 size-20">
+            {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
+            <AvatarFallback className="bg-fill text-title-1 text-label-secondary">
+              {initial}
+            </AvatarFallback>
+          </Avatar>
+          {displayName ? <p className="text-title-2 text-label">{displayName}</p> : null}
+          <p className="text-subheadline text-label-secondary">{email}</p>
+        </div>
 
-      <div className="flex flex-col px-4 sm:px-6">
-        <Link
-          href="/perfil/editar"
-          className="flex items-center gap-3 border-b border-ink-border py-3 text-sm font-medium text-ink"
-        >
-          <Pencil className="size-4 text-ink-muted" />
-          <span className="flex-1">Editar perfil</span>
-          <ChevronRight className="size-4 text-ink-muted" />
-        </Link>
-        <Link
-          href="/perfil/estadisticas"
-          className="flex items-center gap-3 border-b border-ink-border py-3 text-sm font-medium text-ink"
-        >
-          <BarChart3 className="size-4 text-ink-muted" />
-          <span className="flex-1">Estadísticas</span>
-          <ChevronRight className="size-4 text-ink-muted" />
-        </Link>
-        <ExportLibraryButton />
-        <Separator />
-        <form action={logout}>
-          <button
-            type="submit"
-            className="flex w-full items-center gap-3 py-3 text-left text-sm font-medium text-ink"
-          >
-            <LogOut className="size-4 text-ink-muted" />
-            Cerrar sesión
-          </button>
-        </form>
-      </div>
+        <ListSection>
+          <ListRow href="/perfil/editar" icon={Pencil} label="Editar perfil" />
+          <ListRow href="/perfil/estadisticas" icon={BarChart3} label="Estadísticas" />
+        </ListSection>
 
-      <div className="flex flex-col gap-1 px-4 sm:px-6">
-        <p className="text-xs font-bold tracking-wide text-destructive uppercase">Zona peligrosa</p>
-        <DeleteAccountSheet />
+        <AppearancePicker initial={theme} />
+
+        <ListSection footer="Descarga todos tus libros con su estado, etiquetas, calificación, reseña y fechas de lectura.">
+          <ExportLibraryButton />
+        </ListSection>
+
+        <ListSection>
+          <LogoutRow />
+        </ListSection>
+
+        <ListSection footer="Borra tu biblioteca completa y tu cuenta. No se puede deshacer.">
+          <DeleteAccountSheet />
+        </ListSection>
       </div>
     </div>
   );

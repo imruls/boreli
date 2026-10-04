@@ -1,12 +1,12 @@
 "use client";
 
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Input } from "@/components/ui/input";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { PROGRESS_TYPE_LABELS } from "@/lib/book-progress";
 import type { ProgressType } from "@/types/book";
 
-const CHIP_CLASS =
-  "rounded-full border border-ink-border px-3.5 text-xs font-semibold text-ink-muted data-[state=on]:border-ink data-[state=on]:bg-ink data-[state=on]:text-cream";
+const NO_PROGRESS = "none";
+type ProgressMode = ProgressType | typeof NO_PROGRESS;
 
 export interface ProgressValue {
   progressType: ProgressType | null;
@@ -15,8 +15,8 @@ export interface ProgressValue {
 }
 
 // Modo de elección libre por libro (percent/pages), sin importar el tag de
-// formato — mismo patrón de chips que `tag-selector.tsx`, pero de selección
-// única (`type="single"`, deseleccionable tocando el chip activo de nuevo).
+// formato, con un segmented control. Como un segmented control siempre tiene
+// una opción elegida, "Ninguno" es un segmento más (borra el progreso).
 // En modo 'pages', si el libro tiene `pageCount` se prellena como total (pero
 // queda editable): ese total es propio del progreso, no pisa `book.pageCount`.
 export function ProgressInput({
@@ -28,13 +28,13 @@ export function ProgressInput({
   onChange: (value: ProgressValue) => void;
   bookPageCount?: number | null;
 }) {
-  function handleTypeChange(next: string) {
-    if (!next) {
+  function handleTypeChange(next: ProgressMode) {
+    if (next === NO_PROGRESS) {
       onChange({ progressType: null, progressCurrent: null, progressTotalPages: null });
       return;
     }
 
-    const nextType = next as ProgressType;
+    const nextType = next;
     if (nextType === value.progressType) return;
 
     if (nextType === "pages") {
@@ -57,23 +57,20 @@ export function ProgressInput({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <ToggleGroup
-        type="single"
-        value={value.progressType ?? ""}
+    <div className="flex flex-col gap-3">
+      <SegmentedControl<ProgressMode>
+        aria-label="Modo de progreso"
+        value={value.progressType ?? NO_PROGRESS}
         onValueChange={handleTypeChange}
-        className="flex-wrap justify-start gap-2"
-      >
-        <ToggleGroupItem value="percent" className={CHIP_CLASS}>
-          {PROGRESS_TYPE_LABELS.percent}
-        </ToggleGroupItem>
-        <ToggleGroupItem value="pages" className={CHIP_CLASS}>
-          {PROGRESS_TYPE_LABELS.pages}
-        </ToggleGroupItem>
-      </ToggleGroup>
+        options={[
+          { value: NO_PROGRESS, label: "Ninguno" },
+          { value: "percent", label: PROGRESS_TYPE_LABELS.percent },
+          { value: "pages", label: PROGRESS_TYPE_LABELS.pages },
+        ]}
+      />
 
       {value.progressType === "percent" ? (
-        <div className="flex items-center gap-2 text-sm text-ink">
+        <div className="flex items-center gap-2 text-body text-label">
           <Input
             type="number"
             inputMode="numeric"
@@ -81,35 +78,35 @@ export function ProgressInput({
             max={100}
             value={value.progressCurrent ?? ""}
             onChange={handleNumberChange("progressCurrent", 0)}
-            className="w-20"
+            className="w-24 bg-fill text-center"
             aria-label="Porcentaje leído"
           />
-          <span className="text-ink-muted">%</span>
+          <span className="text-label-secondary">%</span>
         </div>
       ) : null}
 
       {value.progressType === "pages" ? (
-        <div className="flex flex-wrap items-center gap-2 text-sm text-ink">
+        <div className="flex flex-wrap items-center gap-2 text-body text-label">
           <Input
             type="number"
             inputMode="numeric"
             min={0}
             value={value.progressCurrent ?? ""}
             onChange={handleNumberChange("progressCurrent", 0)}
-            className="w-20"
+            className="w-24 bg-fill text-center"
             aria-label="Página actual"
           />
-          <span className="text-ink-muted">de</span>
+          <span className="text-label-secondary">de</span>
           <Input
             type="number"
             inputMode="numeric"
             min={1}
             value={value.progressTotalPages ?? ""}
             onChange={handleNumberChange("progressTotalPages", 1)}
-            className="w-20"
+            className="w-24 bg-fill text-center"
             aria-label="Total de páginas"
           />
-          <span className="text-ink-muted">páginas</span>
+          <span className="text-label-secondary">páginas</span>
         </div>
       ) : null}
     </div>

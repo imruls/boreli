@@ -4,8 +4,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { BookOpen } from "lucide-react";
-import { BackButton } from "@/components/nav/back-button";
+import { PageHeader } from "@/components/nav/page-header";
 import { Button } from "@/components/ui/button";
+import { ListItem, ListRow, ListSection } from "@/components/ui/list";
+import { COVER_FRAME_CLASS } from "@/components/books/book-card";
+import { BookStatusBadge } from "@/components/books/book-status-badge";
 import { BookTagBadge } from "@/components/books/book-tag-badge";
 import { RatingStars } from "@/components/books/rating-stars";
 import { ProgressBar } from "@/components/books/progress-bar";
@@ -13,16 +16,10 @@ import { EditBookSheet } from "@/components/books/edit-book-sheet";
 import { AddToLibrarySheet } from "@/components/books/add-to-library-sheet";
 import type { ProgressValue } from "@/components/books/progress-input";
 import { hasProgress } from "@/lib/book-progress";
-import { stripHtml } from "@/lib/utils";
+import { cn, stripHtml } from "@/lib/utils";
 import { updateUserBook, deleteUserBook } from "@/app/(dashboard)/actions";
 import { addBookToLibrary } from "@/app/(dashboard)/buscar/actions";
 import type { BookStatus, BookTag, GoogleBookDetail, UserBook } from "@/types/book";
-
-const STATUS_LABEL: Record<BookStatus, string> = {
-  want_to_read: "Quiero leer",
-  reading: "Leyendo",
-  read: "Leído",
-};
 
 // Página completa de detalle (`/libro/[id]`): combina el detalle on-demand
 // de Google Books (`detail`, siempre presente) con la relación del usuario
@@ -118,72 +115,61 @@ export function BookDetailView({
 
   const genre = detail.categories.length > 0 ? detail.categories.join(", ") : null;
 
-  return (
-    <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-8">
-      <div className="flex items-center gap-3 px-4 pt-4 sm:px-6">
-        <BackButton />
-        <h1 className="font-heading text-lg font-bold text-ink">Libro</h1>
-      </div>
+  const googleRating = detail.averageRating
+    ? `${detail.averageRating.toFixed(1)}/5${detail.ratingsCount ? ` (${detail.ratingsCount})` : ""}`
+    : null;
 
-      <div className="flex flex-col gap-6 px-4 sm:px-6">
-        <div className="flex gap-4">
-          <div className="h-40 w-28 shrink-0 overflow-hidden rounded-lg bg-ink-border">
+  return (
+    <div className="flex flex-1 flex-col gap-4">
+      <PageHeader
+        title="Libro"
+        back="history"
+        actions={
+          userBook ? (
+            <Button variant="ghost" onClick={() => setEditOpen(true)}>
+              Editar
+            </Button>
+          ) : undefined
+        }
+      />
+
+      <div className="flex flex-col gap-8 px-(--layout-margin)">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className={cn(COVER_FRAME_CLASS, "h-48 w-32 shadow-[0_8px_24px_rgb(0_0_0/18%)]")}>
             {detail.coverUrl ? (
               <Image
                 src={detail.coverUrl}
                 alt={detail.title}
-                width={168}
-                height={240}
-                className="size-full object-contain"
+                width={256}
+                height={384}
+                className="size-full object-cover"
               />
             ) : (
-              <div className="flex size-full items-center justify-center text-ink-muted">
-                <BookOpen className="size-8" />
+              <div className="flex size-full items-center justify-center text-label-tertiary">
+                <BookOpen className="size-8" aria-hidden />
               </div>
             )}
           </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-1 pt-1">
-            <h2 className="font-heading text-xl font-bold text-ink">{detail.title}</h2>
+          <div className="flex flex-col items-center gap-1">
+            <h2 className="text-title-2 text-label">{detail.title}</h2>
             {detail.authors.length > 0 ? (
-              <p className="text-sm text-ink-muted">{detail.authors.join(", ")}</p>
+              <p className="text-subheadline text-label-secondary">{detail.authors.join(", ")}</p>
             ) : null}
-            {userBook ? (
-              <span className="mt-1 text-xs font-semibold text-ink-muted">
-                {STATUS_LABEL[userBook.status]}
-              </span>
-            ) : null}
+            {userBook ? <BookStatusBadge status={userBook.status} className="mt-2" /> : null}
           </div>
+          {!userBook ? (
+            <div className="flex w-full flex-col gap-2">
+              <Button size="lg" className="w-full" onClick={() => setAddOpen(true)}>
+                Agregar a biblioteca
+              </Button>
+              {addError ? <p className="text-footnote text-destructive">{addError}</p> : null}
+            </div>
+          ) : null}
         </div>
-
-        <div className="grid grid-cols-2 gap-4 rounded-xl border border-ink-border p-4">
-          <MetaField label="Fecha de publicación" value={detail.publishedDate} />
-          <MetaField label="Género" value={genre} />
-          <MetaField label="Páginas" value={detail.pageCount ? String(detail.pageCount) : null} />
-          <MetaField
-            label="Rating de Google"
-            value={
-              detail.averageRating
-                ? `${detail.averageRating.toFixed(1)}/5${
-                    detail.ratingsCount ? ` (${detail.ratingsCount})` : ""
-                  }`
-                : null
-            }
-          />
-        </div>
-
-        {detail.description ? (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold text-ink-muted">Descripción</span>
-            <p className="text-sm whitespace-pre-wrap text-ink">
-              {stripHtml(detail.description)}
-            </p>
-          </div>
-        ) : null}
 
         {userBook ? (
-          <div className="flex flex-col gap-4 rounded-xl border border-ink-border p-4">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-ink-muted">Etiquetas</span>
+          <ListSection header="En tu biblioteca">
+            <ListItem>
               {userBook.tags.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-2">
                   {userBook.tags.map((tag) => (
@@ -191,47 +177,48 @@ export function BookDetailView({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-ink-muted">Sin etiquetas</p>
+                <p className="text-body text-label-secondary">Sin etiquetas</p>
               )}
-            </div>
-
+            </ListItem>
             {userBook.status === "reading" && hasProgress(userBook) ? (
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-ink-muted">Progreso</span>
+              <ListItem>
                 <ProgressBar
                   progressType={userBook.progressType}
                   progressCurrent={userBook.progressCurrent}
                   progressTotalPages={userBook.progressTotalPages}
                 />
-              </div>
+              </ListItem>
             ) : null}
-
             {userBook.status === "read" ? (
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-ink-muted">Calificación</span>
+              <ListItem className="flex flex-col gap-2">
                 {userBook.rating ? (
-                  <RatingStars rating={userBook.rating} className="gap-1" />
+                  <RatingStars rating={userBook.rating} className="gap-1 [&_svg]:size-5" />
                 ) : (
-                  <p className="text-sm text-ink-muted">Sin calificación</p>
+                  <p className="text-body text-label-secondary">Sin calificación</p>
                 )}
                 {userBook.note ? (
-                  <p className="mt-1 text-sm whitespace-pre-wrap text-ink">{userBook.note}</p>
+                  <p className="text-body whitespace-pre-wrap text-label">{userBook.note}</p>
                 ) : null}
-              </div>
+              </ListItem>
             ) : null}
+          </ListSection>
+        ) : null}
 
-            <Button onClick={() => setEditOpen(true)} className="self-start">
-              Editar
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <Button onClick={() => setAddOpen(true)} className="self-start">
-              Agregar a biblioteca
-            </Button>
-            {addError ? <p className="text-sm text-destructive">{addError}</p> : null}
-          </div>
-        )}
+        <ListSection header="Información">
+          <MetaRow label="Publicación" value={detail.publishedDate} />
+          <MetaRow label="Género" value={genre} />
+          <MetaRow label="Páginas" value={detail.pageCount ? String(detail.pageCount) : null} />
+          <MetaRow label="Rating de Google" value={googleRating} />
+        </ListSection>
+
+        {detail.description ? (
+          <section className="flex flex-col gap-2">
+            <h2 className="text-title-3 text-label">Descripción</h2>
+            <p className="text-body whitespace-pre-wrap text-label">
+              {stripHtml(detail.description)}
+            </p>
+          </section>
+        ) : null}
       </div>
 
       {userBook ? (
@@ -273,11 +260,6 @@ export function BookDetailView({
   );
 }
 
-function MetaField({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-xs font-semibold text-ink-muted">{label}</span>
-      <span className="text-sm text-ink">{value ?? "No disponible"}</span>
-    </div>
-  );
+function MetaRow({ label, value }: { label: string; value: string | null }) {
+  return <ListRow label={label} detail={value ?? "No disponible"} />;
 }

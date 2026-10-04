@@ -1,11 +1,10 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { ListItem, ListSection } from "@/components/ui/list";
 import { ConfirmationBanner, useConfirmationBanner } from "@/components/ui/confirmation-banner";
 import { updateProfile, removeAvatar, type ProfileState } from "@/app/(dashboard)/perfil/editar/actions";
 
@@ -26,7 +25,8 @@ export function ProfileForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { message: confirmation, show: showConfirmation } = useConfirmationBanner();
 
-  const initial = email ? email.charAt(0).toUpperCase() : "?";
+  // Misma inicial que en Perfil y en el sidebar: nombre si hay, si no email.
+  const initial = (displayName || email).charAt(0).toUpperCase() || "?";
   const currentAvatarUrl = preview ?? avatarUrl;
   const isBusy = isPending || isRemovePending;
 
@@ -38,53 +38,69 @@ export function ProfileForm({
     if (removeState.success && !isRemovePending) showConfirmation("Foto eliminada.");
   }, [removeState.success, isRemovePending, showConfirmation]);
 
+  const error = state.error ?? removeState.error;
+
   return (
-    <div className="flex flex-col gap-6">
-      <form action={formAction} className="flex flex-col items-center gap-2">
-        <div className="relative">
-          <Avatar className="size-20">
-            {currentAvatarUrl ? <AvatarImage src={currentAvatarUrl} alt="" /> : null}
-            <AvatarFallback className="bg-ink-border text-2xl text-ink">{initial}</AvatarFallback>
-          </Avatar>
-          <button
+    <form action={formAction} className="flex flex-col gap-8">
+      <div className="flex flex-col items-center gap-2">
+        <Avatar className="size-24">
+          {currentAvatarUrl ? <AvatarImage src={currentAvatarUrl} alt="" /> : null}
+          <AvatarFallback className="bg-fill text-large-title font-normal text-label-secondary">
+            {initial}
+          </AvatarFallback>
+        </Avatar>
+        <input
+          ref={fileInputRef}
+          type="file"
+          name="avatar"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            setPreview(URL.createObjectURL(file));
+          }}
+        />
+        <div className="flex items-center gap-1">
+          <Button
             type="button"
-            aria-label="Cambiar foto de perfil"
-            onClick={() => fileInputRef.current?.click()}
-            className="absolute -right-1.5 -bottom-1.5 flex size-9 items-center justify-center rounded-full border border-ink-border bg-cream text-ink"
-          >
-            <Camera className="size-4" />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            name="avatar"
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (!file) return;
-              setPreview(URL.createObjectURL(file));
-            }}
-          />
-        </div>
-
-        {avatarUrl || preview ? (
-          <button
-            type="button"
-            onClick={() => {
-              setPreview(null);
-              if (fileInputRef.current) fileInputRef.current.value = "";
-              if (!preview) removeAction(new FormData());
-            }}
+            variant="ghost"
+            size="sm"
             disabled={isBusy}
-            className="text-xs font-medium text-ink-muted underline disabled:opacity-50"
+            onClick={() => fileInputRef.current?.click()}
           >
-            {isRemovePending ? "Quitando…" : "Quitar foto"}
-          </button>
-        ) : null}
+            {currentAvatarUrl ? "Cambiar foto" : "Agregar foto"}
+          </Button>
+          {avatarUrl || preview ? (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              disabled={isBusy}
+              pending={isRemovePending}
+              onClick={() => {
+                setPreview(null);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+                if (!preview) removeAction(new FormData());
+              }}
+            >
+              Quitar foto
+            </Button>
+          ) : null}
+        </div>
+      </div>
 
-        <div className="flex w-full flex-col gap-1.5 pt-4">
-          <Label htmlFor="displayName">Nombre de usuario</Label>
+      <ListSection
+        header="Nombre de usuario"
+        footer={
+          error ? (
+            <span className="text-destructive">{error}</span>
+          ) : (
+            "Se muestra en tu perfil en vez del email."
+          )
+        }
+      >
+        <ListItem className="py-0">
           <Input
             id="displayName"
             name="displayName"
@@ -92,20 +108,17 @@ export function ProfileForm({
             maxLength={40}
             defaultValue={displayName}
             placeholder={email}
+            aria-label="Nombre de usuario"
+            className="rounded-none bg-transparent px-0 focus-visible:ring-0"
           />
-          <p className="text-xs text-ink-muted">Se muestra en tu perfil en vez del email.</p>
-        </div>
+        </ListItem>
+      </ListSection>
 
-        {state.error ? <p className="w-full text-sm text-destructive">{state.error}</p> : null}
-        {removeState.error ? (
-          <p className="w-full text-sm text-destructive">{removeState.error}</p>
-        ) : null}
-        <ConfirmationBanner message={confirmation} className="w-full" />
+      <ConfirmationBanner message={confirmation} />
 
-        <Button type="submit" disabled={isBusy} className="mt-2 w-full">
-          {isPending ? "Guardando..." : "Guardar cambios"}
-        </Button>
-      </form>
-    </div>
+      <Button type="submit" size="lg" disabled={isBusy} pending={isPending} className="w-full">
+        Guardar cambios
+      </Button>
+    </form>
   );
 }

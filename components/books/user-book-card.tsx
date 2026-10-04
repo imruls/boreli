@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import { BookCard } from "@/components/books/book-card";
+import { Button } from "@/components/ui/button";
 import { BookDetailSheet } from "@/components/books/book-detail-sheet";
 import { EditBookSheet } from "@/components/books/edit-book-sheet";
 import { UpdateProgressSheet } from "@/components/books/update-progress-sheet";
@@ -155,20 +156,18 @@ export function UserBookCard({
                 progressTotalPages={userBook.progressTotalPages}
               />
             ) : (
-              // Sin colores de acento en la marca, el `bg-ink` sólido es la
-              // única forma de hacer que una acción "resalte" del resto de
-              // la card (Von Restorff) — se reserva para esta, la única
-              // acción que de verdad importa completar acá.
-              <button
-                type="button"
+              // Botón tinted (design-system.md → "Botones"): la única acción
+              // de la fila que vale la pena destacar.
+              <Button
+                variant="tinted"
+                size="sm"
                 onClick={(event) => {
                   event.stopPropagation();
                   setProgressOpen(true);
                 }}
-                className="self-start rounded-full bg-ink px-3.5 py-1.5 text-xs font-semibold text-cream"
               >
                 Agregar progreso
-              </button>
+              </Button>
             )
           ) : undefined
         }
@@ -180,14 +179,16 @@ export function UserBookCard({
               setEditOpen(true);
             }}
             aria-label={`Editar ${userBook.book.title}`}
-            className="flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-ink-border/40"
+            className="group/more flex size-11 items-center justify-center rounded-full outline-none"
           >
-            <MoreVertical className="size-4" />
+            <span className="flex size-7 items-center justify-center rounded-full bg-fill text-tint group-active/more:opacity-70 group-focus-visible/more:ring-2 group-focus-visible/more:ring-tint">
+              <Ellipsis className="size-4" strokeWidth={2.5} />
+            </span>
           </button>
         }
       />
 
-      <ConfirmationBanner message={confirmation} className="mt-2" />
+      <ConfirmationBanner message={confirmation} />
 
       <BookDetailSheet
         open={detailOpen}

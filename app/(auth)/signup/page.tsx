@@ -12,8 +12,8 @@ export default function SignupPage() {
       <div className="flex flex-col items-center gap-3 text-center">
         <LogoMark />
         <div className="flex flex-col gap-1">
-          <h1 className="font-heading text-2xl font-bold text-ink">Creá tu cuenta</h1>
-          <p className="text-sm text-ink-muted">Registrate para empezar a armar tu biblioteca</p>
+          <h1 className="text-title-1 text-label">Creá tu cuenta</h1>
+          <p className="text-body text-label-secondary">Registrate para empezar a armar tu biblioteca</p>
         </div>
       </div>
       <SignupForm />

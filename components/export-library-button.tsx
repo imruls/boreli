@@ -2,6 +2,7 @@
 
 import { useTransition, useState } from "react";
 import { Download } from "lucide-react";
+import { ListRow } from "@/components/ui/list";
 import { exportLibraryCsv } from "@/app/(dashboard)/actions";
 
 // El CSV se arma en el server (RLS + acceso a Supabase); acá solo se
@@ -34,18 +35,15 @@ export function ExportLibraryButton() {
     });
   }
 
+  // Fila de lista (va dentro de una `ListSection`); el error se muestra como
+  // texto secundario de la misma fila.
   return (
-    <div className="flex flex-col gap-1">
-      <button
-        type="button"
-        onClick={handleExport}
-        disabled={isPending}
-        className="flex w-full items-center gap-3 border-b border-ink-border py-3 text-left text-sm font-medium text-ink disabled:opacity-50"
-      >
-        <Download className="size-4 text-ink-muted" />
-        {isPending ? "Exportando…" : "Exportar biblioteca (CSV)"}
-      </button>
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
-    </div>
+    <ListRow
+      icon={Download}
+      label={isPending ? "Exportando…" : "Exportar biblioteca (CSV)"}
+      description={error ? <span className="text-destructive">{error}</span> : undefined}
+      disabled={isPending}
+      onClick={handleExport}
+    />
   );
 }

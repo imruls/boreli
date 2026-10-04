@@ -25,7 +25,6 @@ export function BookSortSelect({
     <Select value={value} onValueChange={(next) => onChange(next as BookSortOption)}>
       <SelectTrigger
         size="sm"
-        className="border-ink-border bg-cream text-xs font-semibold text-ink-muted"
         aria-label="Ordenar por"
       >
         <SelectValue />

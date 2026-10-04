@@ -13,10 +13,12 @@ export function NoteInput({
   value,
   onChange,
   className,
+  textareaClassName,
 }: {
   value: string;
   onChange: (note: string) => void;
   className?: string;
+  textareaClassName?: string;
 }) {
   return (
     <div className={cn("flex flex-col gap-1", className)}>
@@ -27,8 +29,9 @@ export function NoteInput({
         rows={3}
         maxLength={NOTE_MAX_LENGTH}
         aria-label="Reseña"
+        className={textareaClassName}
       />
-      <span className="self-end text-xs text-ink-muted">
+      <span className="self-end text-caption-1 text-label-tertiary">
         {value.length}/{NOTE_MAX_LENGTH}
       </span>
     </div>

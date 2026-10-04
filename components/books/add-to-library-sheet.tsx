@@ -1,19 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { Sheet, SheetBody, SheetContent, SheetNavBar } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { ListItem, ListSection } from "@/components/ui/list";
 import { RatingInput } from "@/components/books/rating-input";
 import { NoteInput } from "@/components/books/note-input";
 import { TagSelector } from "@/components/books/tag-selector";
-import { BOOK_STATUS_OPTIONS as OPTIONS } from "@/lib/book-status";
-import { cn } from "@/lib/utils";
+import { StatusPicker } from "@/components/books/status-picker";
 import type { BookStatus, BookTag } from "@/types/book";
 
 // Mapea directo a los 3 status reales del modelo (want_to_read / reading /
@@ -59,77 +53,53 @@ export function AddToLibrarySheet({
 
   return (
     <Sheet open={open} onOpenChange={(next) => !isSaving && onOpenChange(next)}>
-      <SheetContent side="bottom" className="rounded-t-2xl border-ink-border">
-        <SheetHeader>
-          <SheetTitle className="text-xs font-bold tracking-wide text-ink-muted uppercase">
-            Agregar a…
-          </SheetTitle>
-          {bookTitle ? <p className="text-sm font-medium text-ink">{bookTitle}</p> : null}
-        </SheetHeader>
+      <SheetContent>
+        <SheetNavBar
+          title="Agregar libro"
+          leading={
+            <Button
+              variant="ghost"
+              className="font-normal"
+              disabled={isSaving}
+              onClick={() => onOpenChange(false)}
+            >
+              Cancelar
+            </Button>
+          }
+          trailing={
+            <Button variant="ghost" disabled={!canSave} pending={isSaving} onClick={handleSave}>
+              Agregar
+            </Button>
+          }
+        />
+        <SheetBody>
+          {bookTitle ? (
+            <p className="text-center text-subheadline text-label-secondary">{bookTitle}</p>
+          ) : null}
 
-        <div className="flex flex-col gap-4 px-4">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold text-ink-muted">Formato (opcional)</span>
-            <TagSelector value={tags} onChange={setTags} />
-          </div>
+          <StatusPicker value={selectedStatus} onChange={setSelectedStatus} disabled={isSaving} />
 
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold text-ink-muted">Estado</span>
-            <div className="flex flex-col gap-1">
-              {OPTIONS.map(({ status, label, icon: Icon }) => {
-                const isSelected = selectedStatus === status;
-                return (
-                  <button
-                    key={status}
-                    type="button"
-                    disabled={isSaving}
-                    onClick={() => setSelectedStatus(status)}
-                    aria-pressed={isSelected}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm font-medium text-ink disabled:opacity-50",
-                      isSelected ? "bg-ink-border/40" : "hover:bg-ink-border/20",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "flex size-9 shrink-0 items-center justify-center rounded-lg border bg-cream",
-                        isSelected ? "border-ink" : "border-ink-border",
-                      )}
-                    >
-                      <Icon className="size-4 text-ink" />
-                    </span>
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <ListSection header="Formato (opcional)">
+            <ListItem>
+              <TagSelector value={tags} onChange={setTags} />
+            </ListItem>
+          </ListSection>
 
           {needsRating ? (
-            <>
-              <div className="flex flex-col gap-1.5 rounded-lg border border-ink-border px-3 py-3">
-                <span className="text-xs font-semibold text-ink-muted">
-                  Calificación (obligatoria para marcar como leído)
-                </span>
-                <RatingInput value={rating} onChange={setRating} />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-ink-muted">Reseña (opcional)</span>
-                <NoteInput value={note} onChange={setNote} />
-              </div>
-            </>
+            <ListSection header="Tu opinión" footer="La calificación es obligatoria para marcar el libro como leído.">
+              <ListItem className="py-1">
+                <RatingInput value={rating} onChange={setRating} className="-mx-2" />
+              </ListItem>
+              <ListItem>
+                <NoteInput
+                  value={note}
+                  onChange={setNote}
+                  textareaClassName="min-h-20 bg-transparent px-0 py-1 focus-visible:ring-0"
+                />
+              </ListItem>
+            </ListSection>
           ) : null}
-        </div>
-
-        <SheetFooter>
-          <Button disabled={!canSave || isSaving} onClick={handleSave}>
-            {isSaving ? "Agregando…" : "Agregar"}
-          </Button>
-          <Button variant="outline" disabled={isSaving} onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-        </SheetFooter>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );
