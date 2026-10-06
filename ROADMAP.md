@@ -175,7 +175,8 @@ en pantallas ≥ 768px, modo claro y oscuro, fuente del sistema. Por fases, veri
 - Verificación por código de email en cada login/signup (se probó para el MVP y se descartó porque
   requiere conectar un servicio de email propio vía SMTP — el de Supabase por default es solo para
   pruebas, con rate limits muy bajos)
-- Import de CSV (para cerrar el círculo de portabilidad de datos)
+- [x] Import de CSV (para cerrar el círculo de portabilidad de datos) — `/perfil/importar`, con emparejado
+      contra Google Books y vista previa editable; acepta CSV de Boreli, Goodreads y StoryGraph
 - Estadísticas (libros leídos por año, por género, páginas totales)
 - Reordenar manualmente la lista de "quiero leer" (prioridad)
 

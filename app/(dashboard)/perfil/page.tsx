@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { BarChart3, Pencil } from "lucide-react";
+import { BarChart3, FileUp, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ListRow, ListSection } from "@/components/ui/list";
@@ -56,8 +56,9 @@ export default async function PerfilPage() {
 
         <AppearancePicker initial={theme} />
 
-        <ListSection footer="Descarga todos tus libros con su estado, etiquetas, calificación, reseña y fechas de lectura.">
+        <ListSection footer="Descarga todos tus libros con su estado, etiquetas, calificación, reseña y fechas de lectura, o importa una lista desde un CSV (de Boreli, Goodreads o StoryGraph).">
           <ExportLibraryButton />
+          <ListRow href="/perfil/importar" icon={FileUp} label="Importar biblioteca (CSV)" />
         </ListSection>
 
         <ListSection>

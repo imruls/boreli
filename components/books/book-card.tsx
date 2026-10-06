@@ -36,7 +36,7 @@ interface BookCardProps {
 export const COVER_FRAME_CLASS =
   "relative overflow-hidden rounded-[6px] bg-fill after:pointer-events-none after:absolute after:inset-0 after:rounded-[6px] after:ring-[0.5px] after:ring-black/10 after:ring-inset dark:after:ring-white/10";
 
-function BookCover({
+export function BookCover({
   title,
   coverUrl,
   trustedCover,

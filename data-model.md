@@ -139,6 +139,19 @@ diferencia de las RPCs de arriba, esta función no necesita `grant execute` prop
 permite invocar una función que devuelve `trigger` fuera de un trigger, así que queda protegida por
 su propio tipo de retorno.
 
+`supabase/migrations/20261006000000_books_import_service_role.sql` exceptúa de ese trigger los
+inserts hechos con el service role (`auth.role() = 'service_role'`). Los usa solo la importación de
+CSV (`app/(dashboard)/perfil/importar/actions.ts`), que vuelve a pedir cada libro a Google Books por
+id en el server antes de insertarlo y aplica su propio límite por usuario
+(`books-import-new-user`, 300 libros nuevos por día). Sin la excepción, todos esos inserts caerían
+en un único bucket compartido (`books-insert:anon`, porque `auth.uid()` es null con el service role).
+**Esta migración tiene que estar aplicada antes de desplegar la importación.**
+
+Las fechas importadas sin hora se guardan a las 12:00 UTC, así se ven el mismo día en cualquier zona
+horaria. Un libro importado como `read` puede quedar sin `rating` si el archivo no lo trae: la DB lo
+permite (`rating_requires_read` solo impide rating fuera de `read`), y la UI pide la calificación
+recién al editarlo.
+
 ### Nota sobre el constraint de rating
 `rating_requires_read` bloquea a nivel de base de datos que se guarde un rating en un libro que no
 esté en `status = 'read'`. Esto es intencional: la regla de negocio no debe depender únicamente de

@@ -46,6 +46,7 @@ Ver `tech-stack.md` para el detalle de cada decisión.
   El reset/login/signup/borrado de cuenta están limitados por IP (y por cuenta donde aplica) mediante RPCs de Postgres exclusivas de `service_role`
   (`lib/supabase/admin.ts`, variable `SUPABASE_SERVICE_ROLE_KEY`); esas migraciones deben aplicarse antes de desplegar el código.
 - La carga manual de libros (cuando no aparecen en la búsqueda de Google Books) pide: título, autor, portada (URL) y cantidad de páginas. No pide descripción ni fecha de publicación.
+- Importar CSV (`/perfil/importar`): el archivo se lee en el navegador (`lib/csv-import.ts`, que reconoce el CSV de Boreli, Goodreads, StoryGraph o una lista armada a mano; solo exige una columna de título). Cada fila se empareja con Google Books (`matchImportRows`, por ISBN y después por título + autor, ranking en `lib/import-match.ts`) y el usuario revisa la vista previa antes de guardar: puede cambiar la coincidencia, buscar el libro a mano en Google Books (mismo `/api/books/search` y rate limit que Buscar) si el emparejado automático no lo encontró, cargarla como manual o desmarcarla. Importar **nunca pisa** un libro que ya está en la biblioteca (`ignoreDuplicates`). Los libros nuevos se insertan en `books` con el service role tras volver a pedirlos a Google por id, con límite propio de 300 por usuario y por día (ver `data-model.md`).
 - Nombre de usuario (`display_name`) y foto de perfil (`avatar_url`) se editan desde `/perfil/editar` (`app/(dashboard)/perfil/editar/`) y viven en `user_metadata` de Supabase Auth — sin tabla `profiles` nueva, porque no hay funciones sociales que necesiten consultarlos por otro lado. La foto se sube al bucket público `avatars` de Supabase Storage, con la convención de path `{user_id}/avatar` (ver `data-model.md`).
 
 ## Fuera de alcance del MVP
@@ -53,7 +54,7 @@ Ver `tech-stack.md` para el detalle de cada decisión.
 - Sincronización automática con Kindle/Apple Books (no existen APIs públicas — los tags son manuales)
 - Instalación como PWA
 - Historial/estadísticas de progreso de lectura a lo largo del tiempo (solo se guarda el valor actual)
-- Import de CSV, estadísticas, reordenar manualmente "quiero leer" → todo esto es backlog post-MVP, ver `ROADMAP.md`
+- Reordenar manualmente "quiero leer" → backlog post-MVP, ver `ROADMAP.md`
 
 ## Estructura
 Rutas en `/app`, componentes en `/components`, helpers en `/lib`, tipos en `/types`.
