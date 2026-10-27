@@ -1,4 +1,4 @@
-# Boreli 📖
+# Boreli - Book Reading List
 
 Boreli es una app web (no PWA, sin instalación) para registrar los libros que leés, querés leer y
 ya leíste, con rating, reseña personal y etiquetas de formato (físico / Google Books / Apple Books /
