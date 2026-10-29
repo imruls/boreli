@@ -30,11 +30,19 @@ const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
 // queda sin estilos y se dibuja como una caja/línea suelta arriba a la
 // izquierda. En producción ese indicador no existe y la directiva sigue en 'self'.
 const isDev = process.env.NODE_ENV !== "production";
+// script-src sin 'strict-dynamic': con esa directiva el navegador ignora
+// 'self' y solo permite scripts con nonce o creados por uno de ellos, pero
+// en las navegaciones del lado del cliente Next/Turbopack inserta los chunks
+// de la página nueva como <script src> sin nonce, y el navegador los bloquea:
+// la página nunca se renderiza y queda el skeleton de `(dashboard)/loading.tsx`.
+// Con 'self' los chunks de /_next/static cargan igual, y los scripts inline
+// siguen necesitando el nonce. En dev, Vercel Analytics carga su script de
+// debug desde va.vercel-scripts.com (en producción sale de /_vercel/insights).
 
 function buildCsp(nonce: string): string {
   return [
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? ` 'unsafe-eval'` : ""}`,
+    `script-src 'self' 'nonce-${nonce}'${isDev ? ` 'unsafe-eval' https://va.vercel-scripts.com` : ""}`,
     `style-src 'self' 'unsafe-inline'`,
     `style-src-elem 'self'${isDev ? ` 'unsafe-inline'` : ""}`,
     `style-src-attr 'unsafe-inline'`,
