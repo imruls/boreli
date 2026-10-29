@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { fetchWithTimeout } from "@/lib/supabase/fetch-with-timeout";
 
 // Cliente con la Service Role Key: bypassa RLS y habilita `auth.admin.*`.
 // Usos server-only (nunca desde "use client"):
@@ -14,5 +15,6 @@ export function createAdminClient(): SupabaseClient {
 
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    global: { fetch: fetchWithTimeout },
   });
 }

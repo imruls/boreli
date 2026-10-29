@@ -1,3 +1,4 @@
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -29,7 +30,15 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
+  if (isAuthRetryableFetchError(authError)) {
+    console.error("[books/search] No se pudo verificar la sesión", authError);
+    return NextResponse.json(
+      { error: "La búsqueda no está disponible temporalmente." },
+      { status: 503 },
+    );
+  }
   if (!user) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   }

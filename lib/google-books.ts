@@ -60,14 +60,11 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { signal: controller.signal });
-  } finally {
-    clearTimeout(timeoutId);
-  }
+// La señal sigue activa después de recibir los headers, así que el timeout
+// también corta la lectura del body (`response.json()`/`text()`), no solo la
+// conexión.
+function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
+  return fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
 }
 
 // Reintenta ante 429 (cuota) y errores 5xx con backoff exponencial + jitter.

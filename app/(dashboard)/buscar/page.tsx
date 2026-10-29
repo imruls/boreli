@@ -27,6 +27,9 @@ const CATEGORIES: { label: string; value: BookSearchField }[] = [
   { label: "Autores", value: "author" },
 ];
 const DEBOUNCE_MS = 400;
+// Si el servidor no responde, se corta la request y se muestra el estado de
+// error con "Reintentar" en vez de dejar el skeleton cargando para siempre.
+const SEARCH_TIMEOUT_MS = 20_000;
 
 const STATUS_CONFIRMATION: Record<BookStatus, string> = {
   want_to_read: "Agregado a Quiero leer",
@@ -64,8 +67,15 @@ export default function BuscarPage() {
     const requestId = ++latestRequestRef.current;
     const controller = new AbortController();
 
+    let requestTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    let timedOut = false;
+
     const timeoutId = setTimeout(async () => {
       setSearchStatus("loading");
+      requestTimeoutId = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, SEARCH_TIMEOUT_MS);
       try {
         const response = await fetch(
           `/api/books/search?q=${encodeURIComponent(trimmed)}&field=${category}`,
@@ -77,15 +87,20 @@ export default function BuscarPage() {
         setResults(data.books);
         setSearchStatus("idle");
       } catch {
-        if (controller.signal.aborted) return;
+        // Abortada por el cleanup (cambió la búsqueda): la request nueva se
+        // encarga del estado. Abortada por timeout: sí es un error.
+        if (controller.signal.aborted && !timedOut) return;
         if (latestRequestRef.current !== requestId) return;
         setResults([]);
         setSearchStatus("error");
+      } finally {
+        clearTimeout(requestTimeoutId);
       }
     }, DEBOUNCE_MS);
 
     return () => {
       clearTimeout(timeoutId);
+      clearTimeout(requestTimeoutId);
       controller.abort();
     };
   }, [query, category, retryToken]);

@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { fetchWithTimeout } from "@/lib/supabase/fetch-with-timeout";
 
 const AUTH_PATHS = ["/login", "/signup", "/forgot-password"];
 // Accesibles con o sin sesión: el link de recuperación de contraseña llega
@@ -73,6 +75,7 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      global: { fetch: fetchWithTimeout },
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -88,7 +91,15 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  // Supabase no respondió (timeout/red): no se sabe si hay sesión, así que no
+  // se redirige a /login (eso "desloguearía" al usuario por un problema
+  // transitorio). La página o el route vuelve a chequear la sesión y responde
+  // su propio error.
+  if (isAuthRetryableFetchError(error)) {
+    return applySecurityHeaders(supabaseResponse, csp);
+  }
 
   const matchesPath = (path: string) =>
     request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`);
