@@ -169,6 +169,10 @@ export function BookCard({
   if (isGrid) {
     return (
       <li className={cn("relative flex min-w-0 flex-col gap-2", className)}>
+        {/* El "⋯" va sobre la esquina superior derecha de la portada. Va antes
+            que la portada en el DOM para que tocarlo no active el
+            `has-[~div_button:active]` que la atenúa. */}
+        {action ? <div className="absolute top-0 right-0 z-10">{action}</div> : null}
         <div
           className={cn(
             COVER_FRAME_CLASS,
@@ -184,18 +188,15 @@ export function BookCard({
             placeholderIconClass="size-8"
           />
         </div>
-        <div className="min-w-0">
+        {/* Reserva siempre el alto de título en 2 líneas + autor: el autor
+            queda pegado al título y el espacio sobrante va debajo, así
+            rating y chips quedan a la misma altura en toda la fila aunque
+            el título ocupe una sola línea. */}
+        <div className="min-h-[calc(2*var(--text-footnote--line-height)+var(--text-caption-1--line-height))] min-w-0">
           {titleElement}
           {authorsText}
         </div>
-        {meta || action ? (
-          // El "⋯" va en la fila de meta (estrellas/chips) para que el título
-          // use todo el ancho de la celda.
-          <div className="-mt-1 flex items-start justify-between gap-1">
-            <div className="min-w-0 pt-2.5">{meta}</div>
-            {action ? <div className="relative z-10 -mr-2 shrink-0">{action}</div> : null}
-          </div>
-        ) : null}
+        {meta ? <div className="min-w-0">{meta}</div> : null}
         {footer ? <div className="relative z-10">{footer}</div> : null}
       </li>
     );

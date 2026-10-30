@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Ellipsis } from "lucide-react";
 import { BookCard } from "@/components/books/book-card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { BookDetailSheet } from "@/components/books/book-detail-sheet";
 import { EditBookSheet } from "@/components/books/edit-book-sheet";
 import { UpdateProgressSheet } from "@/components/books/update-progress-sheet";
@@ -137,7 +138,11 @@ export function UserBookCard({
         meta={
           userBook.tags.length > 0 || (showRating && userBook.rating) ? (
             <div className="flex flex-wrap items-center gap-2">
-              {showRating && userBook.rating ? <RatingStars rating={userBook.rating} /> : null}
+              {showRating && userBook.rating ? (
+                // En grilla, mismo alto que un chip (`h-6`): así las estrellas
+                // quedan a la misma altura tengan o no un chip al lado.
+                <RatingStars rating={userBook.rating} className={layout === "grid" ? "h-6" : undefined} />
+              ) : null}
               {userBook.tags.map((tag) => (
                 <BookTagBadge key={tag} tag={tag} />
               ))}
@@ -181,7 +186,17 @@ export function UserBookCard({
             aria-label={`Editar ${userBook.book.title}`}
             className="group/more flex size-11 items-center justify-center rounded-full outline-none"
           >
-            <span className="flex size-7 items-center justify-center rounded-full bg-fill text-tint group-active/more:opacity-70 group-focus-visible/more:ring-2 group-focus-visible/more:ring-tint">
+            <span
+              className={cn(
+                "flex size-7 items-center justify-center rounded-full group-active/more:opacity-70 group-focus-visible/more:ring-2 group-focus-visible/more:ring-tint",
+                // En grilla va sobre la portada: material translúcido de las
+                // barras (design-system.md → "Materiales") para que se lea
+                // sobre portadas claras y oscuras.
+                layout === "grid"
+                  ? "bg-background/80 text-label backdrop-blur-xl backdrop-saturate-150"
+                  : "bg-fill text-tint",
+              )}
+            >
               <Ellipsis className="size-4" strokeWidth={2.5} />
             </span>
           </button>
