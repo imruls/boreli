@@ -2,8 +2,8 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 // Isotipo real de la marca: libro cerrado + separador/marcador + "B" en serif
-// (ver design-system.md). El wordmark de texto "BORELI" se escribe aparte, en
-// Roboto Slab (`font-brand`), no es parte de este asset.
+// (ver design-system.md). El wordmark de texto "BORELI" se escribe aparte, con
+// la fuente del sistema, no es parte de este asset.
 // El sufijo del archivo es el color del logo: `-dark` va sobre fondo claro y
 // `-light` sobre fondo oscuro. Se alternan con el variant `dark:`, que sigue la
 // apariencia elegida en Perfil (no solo `prefers-color-scheme`).

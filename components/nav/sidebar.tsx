@@ -32,7 +32,7 @@ export function Sidebar({
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[calc(280px+env(safe-area-inset-left))] flex-col border-r border-separator bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] md:flex">
       <Link href="/" className="flex h-16 items-center gap-2.5 px-5">
         <LogoMark className="size-8" decorative />
-        <span className="font-brand text-subheadline font-bold tracking-wide text-label uppercase">
+        <span className="text-subheadline font-bold tracking-wide text-label uppercase">
           Boreli
         </span>
       </Link>

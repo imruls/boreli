@@ -53,8 +53,6 @@
   --color-input: var(--separator);
   --color-ring: var(--tint);
 
-  --font-brand: var(--font-roboto-slab);
-
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -65,11 +63,11 @@
 }
 
 @theme {
-  /* Fuente del sistema: SF Pro en dispositivos Apple (no se autohospeda: su licencia
-     no lo permite en web). Roboto Slab queda solo para el wordmark (`font-brand`). */
+  /* SF Pro en dispositivos Apple o donde esté instalada (no se autohospeda: su licencia
+     no lo permite en web); en el resto, la fuente del sistema. */
   --font-sans:
-    -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif;
+    -apple-system, BlinkMacSystemFont, "SF Pro", "SF Pro Text", system-ui, "Segoe UI",
+    "Helvetica Neue", Arial, sans-serif;
 
   /* Escala tipográfica de HIG (Dynamic Type, tamaño "Large"), en rem para respetar el
      tamaño de fuente del navegador. Uso: `text-body`, `text-headline`, etc. */

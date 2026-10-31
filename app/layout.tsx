@@ -1,17 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
-import { Roboto_Slab } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { THEME_COLORS, THEME_COOKIE, parseThemePreference } from "@/lib/theme";
 import "./globals.css";
-
-// Solo para el wordmark "BORELI" (`font-brand`); el resto de la UI usa la fuente
-// del sistema (ver design-system.md).
-const robotoSlab = Roboto_Slab({
-  variable: "--font-roboto-slab",
-  subsets: ["latin"],
-  weight: ["700"],
-});
 
 export const metadata: Metadata = {
   title: "Boreli",
@@ -55,7 +46,7 @@ export default async function RootLayout({
       lang="es"
       // El servidor ya renderiza con el tema elegido: sin parpadeo al cargar.
       data-theme={theme === "system" ? undefined : theme}
-      className={`${robotoSlab.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
       <body className="min-h-full flex flex-col">
         {children}

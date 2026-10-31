@@ -84,16 +84,16 @@ el texto. Como HIG pide que lo interactivo se distinga de lo que no lo es, se co
 
 ## Tipografía
 
-**Fuente del sistema** en toda la UI: en dispositivos Apple es SF Pro (la de HIG); en Android,
-Windows y Linux cae a la fuente del sistema de cada uno. SF Pro **no** se autohospeda (su licencia
-no lo permite en web).
+**Fuente del sistema** en toda la UI, incluido el wordmark: en dispositivos Apple es SF Pro (la de
+HIG), y también donde esté instalada; en el resto de Android, Windows y Linux cae a la fuente del
+sistema de cada uno. SF Pro **no** se autohospeda (su licencia no lo permite en web).
 
 ```css
-font-family: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+font-family: -apple-system, BlinkMacSystemFont, "SF Pro", "SF Pro Text", system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 ```
 
-**Roboto Slab** (Bold, mayúsculas, `tracking-wide`) queda **solo** para el wordmark "BORELI" en
-texto. Inter se elimina.
+El wordmark "BORELI" en texto va en Bold, mayúsculas y `tracking-wide`, con esta misma fuente. No
+se carga ninguna fuente web.
 
 ### Escala (Dynamic Type, tamaño "Large" por defecto de iOS)
 
